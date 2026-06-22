@@ -14,7 +14,201 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      foods: {
+        Row: {
+          carboidrato: number
+          categoria: string | null
+          created_at: string
+          energia_kcal: number
+          fibra: number
+          fonte: string
+          gordura: number
+          id: string
+          minerais: Json | null
+          nome: string
+          proteina: number
+          sodio: number
+          unidade_base: string
+          updated_at: string
+          user_id: string | null
+          vitaminas: Json | null
+        }
+        Insert: {
+          carboidrato?: number
+          categoria?: string | null
+          created_at?: string
+          energia_kcal?: number
+          fibra?: number
+          fonte?: string
+          gordura?: number
+          id?: string
+          minerais?: Json | null
+          nome: string
+          proteina?: number
+          sodio?: number
+          unidade_base?: string
+          updated_at?: string
+          user_id?: string | null
+          vitaminas?: Json | null
+        }
+        Update: {
+          carboidrato?: number
+          categoria?: string | null
+          created_at?: string
+          energia_kcal?: number
+          fibra?: number
+          fonte?: string
+          gordura?: number
+          id?: string
+          minerais?: Json | null
+          nome?: string
+          proteina?: number
+          sodio?: number
+          unidade_base?: string
+          updated_at?: string
+          user_id?: string | null
+          vitaminas?: Json | null
+        }
+        Relationships: []
+      }
+      meal_foods: {
+        Row: {
+          created_at: string
+          food_id: string
+          id: string
+          meal_id: string
+          quantidade: number
+        }
+        Insert: {
+          created_at?: string
+          food_id: string
+          id?: string
+          meal_id: string
+          quantidade: number
+        }
+        Update: {
+          created_at?: string
+          food_id?: string
+          id?: string
+          meal_id?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_foods_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_foods_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meals: {
+        Row: {
+          created_at: string
+          data: string
+          horario: string | null
+          id: string
+          observacao: string | null
+          tipo: Database["public"]["Enums"]["meal_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          horario?: string | null
+          id?: string
+          observacao?: string | null
+          tipo: Database["public"]["Enums"]["meal_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          horario?: string | null
+          id?: string
+          observacao?: string | null
+          tipo?: Database["public"]["Enums"]["meal_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nutrition_goals: {
+        Row: {
+          calorias: number
+          carboidratos: number
+          created_at: string
+          fibras: number
+          gorduras: number
+          proteinas: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calorias?: number
+          carboidratos?: number
+          created_at?: string
+          fibras?: number
+          gorduras?: number
+          proteinas?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calorias?: number
+          carboidratos?: number
+          created_at?: string
+          fibras?: number
+          gorduras?: number
+          proteinas?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          altura: number | null
+          created_at: string
+          id: string
+          idade: number | null
+          nome: string | null
+          objetivo: Database["public"]["Enums"]["goal_type"] | null
+          peso: number | null
+          updated_at: string
+        }
+        Insert: {
+          altura?: number | null
+          created_at?: string
+          id: string
+          idade?: number | null
+          nome?: string | null
+          objetivo?: Database["public"]["Enums"]["goal_type"] | null
+          peso?: number | null
+          updated_at?: string
+        }
+        Update: {
+          altura?: number | null
+          created_at?: string
+          id?: string
+          idade?: number | null
+          nome?: string | null
+          objetivo?: Database["public"]["Enums"]["goal_type"] | null
+          peso?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +217,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      goal_type: "emagrecimento" | "manutencao" | "ganho_massa"
+      meal_type: "cafe_da_manha" | "almoco" | "lanche" | "jantar" | "outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +345,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      goal_type: ["emagrecimento", "manutencao", "ganho_massa"],
+      meal_type: ["cafe_da_manha", "almoco", "lanche", "jantar", "outro"],
+    },
   },
 } as const
