@@ -14,60 +14,191 @@ export type Database = {
   }
   public: {
     Tables: {
+      exercise_categories: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      exercises: {
+        Row: {
+          ativo: boolean
+          categoria_id: string | null
+          created_at: string
+          descricao: string | null
+          equipamento: string | null
+          fonte: string
+          grupo_muscular: string | null
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          equipamento?: string | null
+          fonte?: string
+          grupo_muscular?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          categoria_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          equipamento?: string | null
+          fonte?: string
+          grupo_muscular?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercises_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       foods: {
         Row: {
+          calcio: number | null
           carboidrato: number
           categoria: string | null
           created_at: string
           energia_kcal: number
+          ferro: number | null
           fibra: number
           fonte: string
+          fosforo: number | null
           gordura: number
           id: string
+          magnesio: number | null
           minerais: Json | null
           nome: string
+          potassio: number | null
           proteina: number
+          selenio: number | null
           sodio: number
           unidade_base: string
           updated_at: string
           user_id: string | null
+          vit_a: number | null
+          vit_b1: number | null
+          vit_b12: number | null
+          vit_b2: number | null
+          vit_b3: number | null
+          vit_b5: number | null
+          vit_b6: number | null
+          vit_b7: number | null
+          vit_b9: number | null
+          vit_c: number | null
+          vit_d: number | null
+          vit_e: number | null
+          vit_k: number | null
           vitaminas: Json | null
+          zinco: number | null
         }
         Insert: {
+          calcio?: number | null
           carboidrato?: number
           categoria?: string | null
           created_at?: string
           energia_kcal?: number
+          ferro?: number | null
           fibra?: number
           fonte?: string
+          fosforo?: number | null
           gordura?: number
           id?: string
+          magnesio?: number | null
           minerais?: Json | null
           nome: string
+          potassio?: number | null
           proteina?: number
+          selenio?: number | null
           sodio?: number
           unidade_base?: string
           updated_at?: string
           user_id?: string | null
+          vit_a?: number | null
+          vit_b1?: number | null
+          vit_b12?: number | null
+          vit_b2?: number | null
+          vit_b3?: number | null
+          vit_b5?: number | null
+          vit_b6?: number | null
+          vit_b7?: number | null
+          vit_b9?: number | null
+          vit_c?: number | null
+          vit_d?: number | null
+          vit_e?: number | null
+          vit_k?: number | null
           vitaminas?: Json | null
+          zinco?: number | null
         }
         Update: {
+          calcio?: number | null
           carboidrato?: number
           categoria?: string | null
           created_at?: string
           energia_kcal?: number
+          ferro?: number | null
           fibra?: number
           fonte?: string
+          fosforo?: number | null
           gordura?: number
           id?: string
+          magnesio?: number | null
           minerais?: Json | null
           nome?: string
+          potassio?: number | null
           proteina?: number
+          selenio?: number | null
           sodio?: number
           unidade_base?: string
           updated_at?: string
           user_id?: string | null
+          vit_a?: number | null
+          vit_b1?: number | null
+          vit_b12?: number | null
+          vit_b2?: number | null
+          vit_b3?: number | null
+          vit_b5?: number | null
+          vit_b6?: number | null
+          vit_b7?: number | null
+          vit_b9?: number | null
+          vit_c?: number | null
+          vit_d?: number | null
+          vit_e?: number | null
+          vit_k?: number | null
           vitaminas?: Json | null
+          zinco?: number | null
         }
         Relationships: []
       }
@@ -206,6 +337,90 @@ export type Database = {
           objetivo?: Database["public"]["Enums"]["goal_type"] | null
           peso?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      workout_exercises: {
+        Row: {
+          created_at: string
+          exercise_id: string
+          id: string
+          observacoes: string | null
+          ordem: number
+          peso: number | null
+          repeticoes: number | null
+          series: number | null
+          workout_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id: string
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          peso?: number | null
+          repeticoes?: number | null
+          series?: number | null
+          workout_id: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          peso?: number | null
+          repeticoes?: number | null
+          series?: number | null
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercises_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workouts: {
+        Row: {
+          created_at: string
+          data: string
+          duracao_min: number | null
+          horario: string | null
+          id: string
+          observacoes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          duracao_min?: number | null
+          horario?: string | null
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          duracao_min?: number | null
+          horario?: string | null
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
