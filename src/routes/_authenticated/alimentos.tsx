@@ -7,42 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Pencil, Trash2, Search, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { VITAMIN_KEYS, MINERAL_KEYS, VITAMIN_LABELS, MINERAL_LABELS, MICRO_UNITS } from "@/lib/nutrition";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/alimentos")({
   component: AlimentosPage,
 });
 
-type Food = {
-  id: string;
-  user_id: string | null;
-  nome: string;
-  categoria: string | null;
-  unidade_base: string;
-  energia_kcal: number;
-  proteina: number;
-  carboidrato: number;
-  gordura: number;
-  fibra: number;
-  sodio: number;
-  fonte: string;
-};
+type Food = any;
+
+const MICRO_KEYS = [...VITAMIN_KEYS, ...MINERAL_KEYS] as const;
 
 function AlimentosPage() {
   const [search, setSearch] = useState("");
@@ -59,20 +38,14 @@ function AlimentosPage() {
     },
   });
 
-  const userQ = useQuery({
-    queryKey: ["me"],
-    queryFn: async () => (await supabase.auth.getUser()).data.user,
-  });
+  const userQ = useQuery({ queryKey: ["me"], queryFn: async () => (await supabase.auth.getUser()).data.user });
 
   const del = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("foods").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["foods-list"] });
-      toast.success("Alimento removido");
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["foods-list"] }); toast.success("Alimento removido"); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -113,6 +86,9 @@ function AlimentosPage() {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
+                    <FoodDetails food={f}>
+                      <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                    </FoodDetails>
                     <FoodDialog food={f} onSaved={() => qc.invalidateQueries({ queryKey: ["foods-list"] })}>
                       <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
                     </FoodDialog>
@@ -135,8 +111,64 @@ function AlimentosPage() {
   );
 }
 
+function FoodDetails({ food, children }: { food: Food; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const macros = [
+    { name: "Proteína", value: Number(food.proteina) * 4, color: "hsl(var(--primary))" },
+    { name: "Carboidrato", value: Number(food.carboidrato) * 4, color: "#f59e0b" },
+    { name: "Gordura", value: Number(food.gordura) * 9, color: "#ef4444" },
+  ].filter((m) => m.value > 0);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{food.nome}</DialogTitle></DialogHeader>
+        <div className="text-xs text-muted-foreground">Valores por 100{food.unidade_base === "un" ? " un" : food.unidade_base}</div>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="h-56">
+            {macros.length > 0 ? (
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie data={macros} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75}>
+                    {macros.map((m, i) => <Cell key={i} fill={m.color} />)}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => `${Math.round(v)} kcal`} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : <div className="grid place-items-center h-full text-sm text-muted-foreground">Sem dados de macros</div>}
+          </div>
+          <div className="space-y-1 text-sm">
+            <Row k="Calorias" v={`${food.energia_kcal} kcal`} />
+            <Row k="Proteína" v={`${food.proteina} g`} />
+            <Row k="Carboidrato" v={`${food.carboidrato} g`} />
+            <Row k="Gordura" v={`${food.gordura} g`} />
+            <Row k="Fibra" v={`${food.fibra} g`} />
+          </div>
+        </div>
+        <Tabs defaultValue="vit" className="mt-2">
+          <TabsList><TabsTrigger value="vit">Vitaminas</TabsTrigger><TabsTrigger value="min">Minerais</TabsTrigger></TabsList>
+          <TabsContent value="vit" className="grid grid-cols-2 gap-1">
+            {VITAMIN_KEYS.map((k) => <Row key={k} k={VITAMIN_LABELS[k]} v={`${food[k] ?? 0} ${MICRO_UNITS[k]}`} />)}
+          </TabsContent>
+          <TabsContent value="min" className="grid grid-cols-2 gap-1">
+            {MINERAL_KEYS.map((k) => <Row key={k} k={MINERAL_LABELS[k]} v={`${food[k] ?? 0} ${MICRO_UNITS[k]}`} />)}
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Row({ k, v }: { k: string; v: string }) {
+  return <div className="flex justify-between text-xs py-1 border-b last:border-0"><span className="text-muted-foreground">{k}</span><span className="font-medium">{v}</span></div>;
+}
+
 function FoodDialog({ food, children, onSaved }: { food?: Food; children: React.ReactNode; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
+  const initialMicros: Record<string, string> = {};
+  for (const k of MICRO_KEYS) initialMicros[k] = String(food?.[k] ?? "");
   const [form, setForm] = useState(() => ({
     nome: food?.nome ?? "",
     categoria: food?.categoria ?? "",
@@ -147,11 +179,14 @@ function FoodDialog({ food, children, onSaved }: { food?: Food; children: React.
     gordura: String(food?.gordura ?? ""),
     fibra: String(food?.fibra ?? ""),
     sodio: String(food?.sodio ?? ""),
+    micros: initialMicros,
   }));
+
+  const setMicro = (k: string, v: string) => setForm({ ...form, micros: { ...form.micros, [k]: v } });
 
   const save = async () => {
     if (!form.nome.trim()) return toast.error("Informe o nome");
-    const payload = {
+    const payload: any = {
       nome: form.nome.trim(),
       categoria: form.categoria.trim() || null,
       unidade_base: form.unidade_base,
@@ -162,6 +197,10 @@ function FoodDialog({ food, children, onSaved }: { food?: Food; children: React.
       fibra: Number(form.fibra) || 0,
       sodio: Number(form.sodio) || 0,
     };
+    for (const k of MICRO_KEYS) {
+      if (k === "sodio") continue;
+      payload[k] = form.micros[k] === "" ? null : Number(form.micros[k]) || 0;
+    }
     if (food) {
       const { error } = await supabase.from("foods").update(payload).eq("id", food.id);
       if (error) return toast.error(error.message);
@@ -181,9 +220,7 @@ function FoodDialog({ food, children, onSaved }: { food?: Food; children: React.
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{food ? "Editar alimento" : "Novo alimento"}</DialogTitle>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>{food ? "Editar alimento" : "Novo alimento"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <Field label="Nome"><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
           <div className="grid grid-cols-2 gap-3">
@@ -200,14 +237,35 @@ function FoodDialog({ food, children, onSaved }: { food?: Food; children: React.
             </Field>
           </div>
           <div className="text-xs text-muted-foreground">Valores por 100{form.unidade_base === "un" ? " unidade" : form.unidade_base}:</div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Calorias (kcal)"><Input type="number" step="any" value={form.energia_kcal} onChange={(e) => setForm({ ...form, energia_kcal: e.target.value })} /></Field>
-            <Field label="Proteína (g)"><Input type="number" step="any" value={form.proteina} onChange={(e) => setForm({ ...form, proteina: e.target.value })} /></Field>
-            <Field label="Carboidrato (g)"><Input type="number" step="any" value={form.carboidrato} onChange={(e) => setForm({ ...form, carboidrato: e.target.value })} /></Field>
-            <Field label="Gordura (g)"><Input type="number" step="any" value={form.gordura} onChange={(e) => setForm({ ...form, gordura: e.target.value })} /></Field>
-            <Field label="Fibra (g)"><Input type="number" step="any" value={form.fibra} onChange={(e) => setForm({ ...form, fibra: e.target.value })} /></Field>
-            <Field label="Sódio (mg)"><Input type="number" step="any" value={form.sodio} onChange={(e) => setForm({ ...form, sodio: e.target.value })} /></Field>
-          </div>
+          <Tabs defaultValue="macros">
+            <TabsList className="grid grid-cols-3 w-full">
+              <TabsTrigger value="macros">Macros</TabsTrigger>
+              <TabsTrigger value="vit">Vitaminas</TabsTrigger>
+              <TabsTrigger value="min">Minerais</TabsTrigger>
+            </TabsList>
+            <TabsContent value="macros" className="grid grid-cols-2 gap-3">
+              <Field label="Calorias (kcal)"><Input type="number" step="any" value={form.energia_kcal} onChange={(e) => setForm({ ...form, energia_kcal: e.target.value })} /></Field>
+              <Field label="Proteína (g)"><Input type="number" step="any" value={form.proteina} onChange={(e) => setForm({ ...form, proteina: e.target.value })} /></Field>
+              <Field label="Carboidrato (g)"><Input type="number" step="any" value={form.carboidrato} onChange={(e) => setForm({ ...form, carboidrato: e.target.value })} /></Field>
+              <Field label="Gordura (g)"><Input type="number" step="any" value={form.gordura} onChange={(e) => setForm({ ...form, gordura: e.target.value })} /></Field>
+              <Field label="Fibra (g)"><Input type="number" step="any" value={form.fibra} onChange={(e) => setForm({ ...form, fibra: e.target.value })} /></Field>
+              <Field label="Sódio (mg)"><Input type="number" step="any" value={form.sodio} onChange={(e) => setForm({ ...form, sodio: e.target.value })} /></Field>
+            </TabsContent>
+            <TabsContent value="vit" className="grid grid-cols-2 gap-3">
+              {VITAMIN_KEYS.map((k) => (
+                <Field key={k} label={`${VITAMIN_LABELS[k]} (${MICRO_UNITS[k]})`}>
+                  <Input type="number" step="any" value={form.micros[k]} onChange={(e) => setMicro(k, e.target.value)} />
+                </Field>
+              ))}
+            </TabsContent>
+            <TabsContent value="min" className="grid grid-cols-2 gap-3">
+              {MINERAL_KEYS.filter((k) => k !== "sodio").map((k) => (
+                <Field key={k} label={`${MINERAL_LABELS[k]} (${MICRO_UNITS[k]})`}>
+                  <Input type="number" step="any" value={form.micros[k]} onChange={(e) => setMicro(k, e.target.value)} />
+                </Field>
+              ))}
+            </TabsContent>
+          </Tabs>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
@@ -219,10 +277,5 @@ function FoodDialog({ food, children, onSaved }: { food?: Food; children: React.
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
-      {children}
-    </div>
-  );
+  return <div className="space-y-1"><Label className="text-xs">{label}</Label>{children}</div>;
 }
