@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, UtensilsCrossed, Apple, User, LogOut } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, Apple, User, LogOut, BarChart3, Dumbbell, ClipboardList, History } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,10 +16,20 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const items = [
+const nutricaoItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Minha Alimentação", url: "/alimentacao", icon: UtensilsCrossed },
   { title: "Alimentos", url: "/alimentos", icon: Apple },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
+];
+
+const treinoItems = [
+  { title: "Exercícios", url: "/treinos", icon: Dumbbell },
+  { title: "Meu Treino", url: "/meu-treino", icon: ClipboardList },
+  { title: "Histórico", url: "/historico-treinos", icon: History },
+];
+
+const contaItems = [
   { title: "Perfil", url: "/perfil", icon: User },
 ];
 
@@ -34,6 +44,29 @@ export function AppSidebar() {
     toast.success("Você saiu da conta");
     navigate({ to: "/auth", replace: true });
   };
+
+  const renderGroup = (label: string, items: typeof nutricaoItems) => (
+    <SidebarGroup>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.map((item) => {
+            const active = pathname === item.url || pathname.startsWith(item.url + "/");
+            return (
+              <SidebarMenuItem key={item.url}>
+                <SidebarMenuButton asChild isActive={active}>
+                  <Link to={item.url} className="flex items-center gap-3">
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span>{item.title}</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
 
   return (
     <Sidebar collapsible="icon">
@@ -51,26 +84,9 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => {
-                const active = pathname === item.url || pathname.startsWith(item.url + "/");
-                return (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton asChild isActive={active}>
-                      <Link to={item.url} className="flex items-center gap-3">
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {renderGroup("Nutrição", nutricaoItems)}
+        {renderGroup("Treinos", treinoItems)}
+        {renderGroup("Conta", contaItems)}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
