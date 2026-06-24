@@ -114,13 +114,14 @@ function ExerciciosPage() {
                   {e.descricao && <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{e.descricao}</div>}
                 </div>
                 <div className="flex gap-1 shrink-0">
+                  <ExerciseDialog ex={e} cats={cats.data ?? []} onSaved={() => qc.invalidateQueries({ queryKey: ["exercises"] })}>
+                    <Button variant="ghost" size="icon" title="Editar"><Pencil className="h-4 w-4" /></Button>
+                  </ExerciseDialog>
+                  <ExerciseDialog duplicateFrom={e} cats={cats.data ?? []} onSaved={() => qc.invalidateQueries({ queryKey: ["exercises"] })}>
+                    <Button variant="ghost" size="icon" title="Duplicar"><Copy className="h-4 w-4" /></Button>
+                  </ExerciseDialog>
                   {mine && (
-                    <ExerciseDialog ex={e} cats={cats.data ?? []} onSaved={() => qc.invalidateQueries({ queryKey: ["exercises"] })}>
-                      <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
-                    </ExerciseDialog>
-                  )}
-                  {mine && (
-                    <Button variant="ghost" size="icon" onClick={() => del.mutate(e.id)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" title="Excluir" onClick={() => { if (confirm("Excluir este exercício?")) del.mutate(e.id); }}><Trash2 className="h-4 w-4" /></Button>
                   )}
                 </div>
               </CardContent>
