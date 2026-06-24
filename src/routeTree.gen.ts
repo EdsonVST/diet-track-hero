@@ -20,6 +20,7 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedModelosTreinoRouteImport } from './routes/_authenticated/modelos-treino'
 import { Route as AuthenticatedMeuTreinoRouteImport } from './routes/_authenticated/meu-treino'
 import { Route as AuthenticatedHistoricoTreinosRouteImport } from './routes/_authenticated/historico-treinos'
+import { Route as AuthenticatedHidratacaoRouteImport } from './routes/_authenticated/hidratacao'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAlimentosRouteImport } from './routes/_authenticated/alimentos'
 import { Route as AuthenticatedAlimentacaoRouteImport } from './routes/_authenticated/alimentacao'
@@ -81,6 +82,11 @@ const AuthenticatedHistoricoTreinosRoute =
     path: '/historico-treinos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedHidratacaoRoute = AuthenticatedHidratacaoRouteImport.update({
+  id: '/hidratacao',
+  path: '/hidratacao',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/alimentos': typeof AuthenticatedAlimentosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/hidratacao': typeof AuthenticatedHidratacaoRoute
   '/historico-treinos': typeof AuthenticatedHistoricoTreinosRoute
   '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/modelos-treino': typeof AuthenticatedModelosTreinoRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/alimentos': typeof AuthenticatedAlimentosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/hidratacao': typeof AuthenticatedHidratacaoRoute
   '/historico-treinos': typeof AuthenticatedHistoricoTreinosRoute
   '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/modelos-treino': typeof AuthenticatedModelosTreinoRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/_authenticated/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/_authenticated/alimentos': typeof AuthenticatedAlimentosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/hidratacao': typeof AuthenticatedHidratacaoRoute
   '/_authenticated/historico-treinos': typeof AuthenticatedHistoricoTreinosRoute
   '/_authenticated/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/_authenticated/modelos-treino': typeof AuthenticatedModelosTreinoRoute
@@ -153,6 +162,7 @@ export interface FileRouteTypes {
     | '/alimentacao'
     | '/alimentos'
     | '/dashboard'
+    | '/hidratacao'
     | '/historico-treinos'
     | '/meu-treino'
     | '/modelos-treino'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/alimentacao'
     | '/alimentos'
     | '/dashboard'
+    | '/hidratacao'
     | '/historico-treinos'
     | '/meu-treino'
     | '/modelos-treino'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/_authenticated/alimentacao'
     | '/_authenticated/alimentos'
     | '/_authenticated/dashboard'
+    | '/_authenticated/hidratacao'
     | '/_authenticated/historico-treinos'
     | '/_authenticated/meu-treino'
     | '/_authenticated/modelos-treino'
@@ -279,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoricoTreinosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/hidratacao': {
+      id: '/_authenticated/hidratacao'
+      path: '/hidratacao'
+      fullPath: '/hidratacao'
+      preLoaderRoute: typeof AuthenticatedHidratacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -307,6 +326,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlimentacaoRoute: typeof AuthenticatedAlimentacaoRoute
   AuthenticatedAlimentosRoute: typeof AuthenticatedAlimentosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHidratacaoRoute: typeof AuthenticatedHidratacaoRoute
   AuthenticatedHistoricoTreinosRoute: typeof AuthenticatedHistoricoTreinosRoute
   AuthenticatedMeuTreinoRoute: typeof AuthenticatedMeuTreinoRoute
   AuthenticatedModelosTreinoRoute: typeof AuthenticatedModelosTreinoRoute
@@ -321,6 +341,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAlimentacaoRoute: AuthenticatedAlimentacaoRoute,
   AuthenticatedAlimentosRoute: AuthenticatedAlimentosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHidratacaoRoute: AuthenticatedHidratacaoRoute,
   AuthenticatedHistoricoTreinosRoute: AuthenticatedHistoricoTreinosRoute,
   AuthenticatedMeuTreinoRoute: AuthenticatedMeuTreinoRoute,
   AuthenticatedModelosTreinoRoute: AuthenticatedModelosTreinoRoute,
