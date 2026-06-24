@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTreinosRouteImport } from './routes/_authenticated/treinos'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
+import { Route as AuthenticatedPlanejamentoSemanalRouteImport } from './routes/_authenticated/planejamento-semanal'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedModelosTreinoRouteImport } from './routes/_authenticated/modelos-treino'
 import { Route as AuthenticatedMeuTreinoRouteImport } from './routes/_authenticated/meu-treino'
@@ -46,6 +47,12 @@ const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   path: '/relatorios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlanejamentoSemanalRoute =
+  AuthenticatedPlanejamentoSemanalRouteImport.update({
+    id: '/planejamento-semanal',
+    path: '/planejamento-semanal',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -95,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/modelos-treino': typeof AuthenticatedModelosTreinoRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/planejamento-semanal': typeof AuthenticatedPlanejamentoSemanalRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/treinos': typeof AuthenticatedTreinosRoute
 }
@@ -108,6 +116,7 @@ export interface FileRoutesByTo {
   '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/modelos-treino': typeof AuthenticatedModelosTreinoRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/planejamento-semanal': typeof AuthenticatedPlanejamentoSemanalRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/treinos': typeof AuthenticatedTreinosRoute
 }
@@ -123,6 +132,7 @@ export interface FileRoutesById {
   '/_authenticated/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/_authenticated/modelos-treino': typeof AuthenticatedModelosTreinoRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/planejamento-semanal': typeof AuthenticatedPlanejamentoSemanalRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/treinos': typeof AuthenticatedTreinosRoute
 }
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/meu-treino'
     | '/modelos-treino'
     | '/perfil'
+    | '/planejamento-semanal'
     | '/relatorios'
     | '/treinos'
   fileRoutesByTo: FileRoutesByTo
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/meu-treino'
     | '/modelos-treino'
     | '/perfil'
+    | '/planejamento-semanal'
     | '/relatorios'
     | '/treinos'
   id:
@@ -165,6 +177,7 @@ export interface FileRouteTypes {
     | '/_authenticated/meu-treino'
     | '/_authenticated/modelos-treino'
     | '/_authenticated/perfil'
+    | '/_authenticated/planejamento-semanal'
     | '/_authenticated/relatorios'
     | '/_authenticated/treinos'
   fileRoutesById: FileRoutesById
@@ -210,6 +223,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/planejamento-semanal': {
+      id: '/_authenticated/planejamento-semanal'
+      path: '/planejamento-semanal'
+      fullPath: '/planejamento-semanal'
+      preLoaderRoute: typeof AuthenticatedPlanejamentoSemanalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/perfil': {
@@ -272,6 +292,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMeuTreinoRoute: typeof AuthenticatedMeuTreinoRoute
   AuthenticatedModelosTreinoRoute: typeof AuthenticatedModelosTreinoRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedPlanejamentoSemanalRoute: typeof AuthenticatedPlanejamentoSemanalRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedTreinosRoute: typeof AuthenticatedTreinosRoute
 }
@@ -284,6 +305,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMeuTreinoRoute: AuthenticatedMeuTreinoRoute,
   AuthenticatedModelosTreinoRoute: AuthenticatedModelosTreinoRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedPlanejamentoSemanalRoute: AuthenticatedPlanejamentoSemanalRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedTreinosRoute: AuthenticatedTreinosRoute,
 }
