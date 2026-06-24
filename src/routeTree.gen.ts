@@ -13,10 +13,15 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTreinosRouteImport } from './routes/_authenticated/treinos'
+import { Route as AuthenticatedTreinoHojeRouteImport } from './routes/_authenticated/treino-hoje'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
+import { Route as AuthenticatedPlanejamentoSemanalRouteImport } from './routes/_authenticated/planejamento-semanal'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedModelosTreinoRouteImport } from './routes/_authenticated/modelos-treino'
 import { Route as AuthenticatedMeuTreinoRouteImport } from './routes/_authenticated/meu-treino'
 import { Route as AuthenticatedHistoricoTreinosRouteImport } from './routes/_authenticated/historico-treinos'
+import { Route as AuthenticatedHidratacaoRouteImport } from './routes/_authenticated/hidratacao'
+import { Route as AuthenticatedEvolucaoFisicaRouteImport } from './routes/_authenticated/evolucao-fisica'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAlimentosRouteImport } from './routes/_authenticated/alimentos'
 import { Route as AuthenticatedAlimentacaoRouteImport } from './routes/_authenticated/alimentacao'
@@ -40,16 +45,33 @@ const AuthenticatedTreinosRoute = AuthenticatedTreinosRouteImport.update({
   path: '/treinos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTreinoHojeRoute = AuthenticatedTreinoHojeRouteImport.update({
+  id: '/treino-hoje',
+  path: '/treino-hoje',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlanejamentoSemanalRoute =
+  AuthenticatedPlanejamentoSemanalRouteImport.update({
+    id: '/planejamento-semanal',
+    path: '/planejamento-semanal',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedModelosTreinoRoute =
+  AuthenticatedModelosTreinoRouteImport.update({
+    id: '/modelos-treino',
+    path: '/modelos-treino',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMeuTreinoRoute = AuthenticatedMeuTreinoRouteImport.update({
   id: '/meu-treino',
   path: '/meu-treino',
@@ -59,6 +81,17 @@ const AuthenticatedHistoricoTreinosRoute =
   AuthenticatedHistoricoTreinosRouteImport.update({
     id: '/historico-treinos',
     path: '/historico-treinos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHidratacaoRoute = AuthenticatedHidratacaoRouteImport.update({
+  id: '/hidratacao',
+  path: '/hidratacao',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEvolucaoFisicaRoute =
+  AuthenticatedEvolucaoFisicaRouteImport.update({
+    id: '/evolucao-fisica',
+    path: '/evolucao-fisica',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -84,10 +117,15 @@ export interface FileRoutesByFullPath {
   '/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/alimentos': typeof AuthenticatedAlimentosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/evolucao-fisica': typeof AuthenticatedEvolucaoFisicaRoute
+  '/hidratacao': typeof AuthenticatedHidratacaoRoute
   '/historico-treinos': typeof AuthenticatedHistoricoTreinosRoute
   '/meu-treino': typeof AuthenticatedMeuTreinoRoute
+  '/modelos-treino': typeof AuthenticatedModelosTreinoRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/planejamento-semanal': typeof AuthenticatedPlanejamentoSemanalRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/treino-hoje': typeof AuthenticatedTreinoHojeRoute
   '/treinos': typeof AuthenticatedTreinosRoute
 }
 export interface FileRoutesByTo {
@@ -96,10 +134,15 @@ export interface FileRoutesByTo {
   '/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/alimentos': typeof AuthenticatedAlimentosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/evolucao-fisica': typeof AuthenticatedEvolucaoFisicaRoute
+  '/hidratacao': typeof AuthenticatedHidratacaoRoute
   '/historico-treinos': typeof AuthenticatedHistoricoTreinosRoute
   '/meu-treino': typeof AuthenticatedMeuTreinoRoute
+  '/modelos-treino': typeof AuthenticatedModelosTreinoRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/planejamento-semanal': typeof AuthenticatedPlanejamentoSemanalRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/treino-hoje': typeof AuthenticatedTreinoHojeRoute
   '/treinos': typeof AuthenticatedTreinosRoute
 }
 export interface FileRoutesById {
@@ -110,10 +153,15 @@ export interface FileRoutesById {
   '/_authenticated/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/_authenticated/alimentos': typeof AuthenticatedAlimentosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/evolucao-fisica': typeof AuthenticatedEvolucaoFisicaRoute
+  '/_authenticated/hidratacao': typeof AuthenticatedHidratacaoRoute
   '/_authenticated/historico-treinos': typeof AuthenticatedHistoricoTreinosRoute
   '/_authenticated/meu-treino': typeof AuthenticatedMeuTreinoRoute
+  '/_authenticated/modelos-treino': typeof AuthenticatedModelosTreinoRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/planejamento-semanal': typeof AuthenticatedPlanejamentoSemanalRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/treino-hoje': typeof AuthenticatedTreinoHojeRoute
   '/_authenticated/treinos': typeof AuthenticatedTreinosRoute
 }
 export interface FileRouteTypes {
@@ -124,10 +172,15 @@ export interface FileRouteTypes {
     | '/alimentacao'
     | '/alimentos'
     | '/dashboard'
+    | '/evolucao-fisica'
+    | '/hidratacao'
     | '/historico-treinos'
     | '/meu-treino'
+    | '/modelos-treino'
     | '/perfil'
+    | '/planejamento-semanal'
     | '/relatorios'
+    | '/treino-hoje'
     | '/treinos'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -136,10 +189,15 @@ export interface FileRouteTypes {
     | '/alimentacao'
     | '/alimentos'
     | '/dashboard'
+    | '/evolucao-fisica'
+    | '/hidratacao'
     | '/historico-treinos'
     | '/meu-treino'
+    | '/modelos-treino'
     | '/perfil'
+    | '/planejamento-semanal'
     | '/relatorios'
+    | '/treino-hoje'
     | '/treinos'
   id:
     | '__root__'
@@ -149,10 +207,15 @@ export interface FileRouteTypes {
     | '/_authenticated/alimentacao'
     | '/_authenticated/alimentos'
     | '/_authenticated/dashboard'
+    | '/_authenticated/evolucao-fisica'
+    | '/_authenticated/hidratacao'
     | '/_authenticated/historico-treinos'
     | '/_authenticated/meu-treino'
+    | '/_authenticated/modelos-treino'
     | '/_authenticated/perfil'
+    | '/_authenticated/planejamento-semanal'
     | '/_authenticated/relatorios'
+    | '/_authenticated/treino-hoje'
     | '/_authenticated/treinos'
   fileRoutesById: FileRoutesById
 }
@@ -192,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreinosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/treino-hoje': {
+      id: '/_authenticated/treino-hoje'
+      path: '/treino-hoje'
+      fullPath: '/treino-hoje'
+      preLoaderRoute: typeof AuthenticatedTreinoHojeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/relatorios': {
       id: '/_authenticated/relatorios'
       path: '/relatorios'
@@ -199,11 +269,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/planejamento-semanal': {
+      id: '/_authenticated/planejamento-semanal'
+      path: '/planejamento-semanal'
+      fullPath: '/planejamento-semanal'
+      preLoaderRoute: typeof AuthenticatedPlanejamentoSemanalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/perfil': {
       id: '/_authenticated/perfil'
       path: '/perfil'
       fullPath: '/perfil'
       preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/modelos-treino': {
+      id: '/_authenticated/modelos-treino'
+      path: '/modelos-treino'
+      fullPath: '/modelos-treino'
+      preLoaderRoute: typeof AuthenticatedModelosTreinoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/meu-treino': {
@@ -218,6 +302,20 @@ declare module '@tanstack/react-router' {
       path: '/historico-treinos'
       fullPath: '/historico-treinos'
       preLoaderRoute: typeof AuthenticatedHistoricoTreinosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hidratacao': {
+      id: '/_authenticated/hidratacao'
+      path: '/hidratacao'
+      fullPath: '/hidratacao'
+      preLoaderRoute: typeof AuthenticatedHidratacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/evolucao-fisica': {
+      id: '/_authenticated/evolucao-fisica'
+      path: '/evolucao-fisica'
+      fullPath: '/evolucao-fisica'
+      preLoaderRoute: typeof AuthenticatedEvolucaoFisicaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -248,10 +346,15 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlimentacaoRoute: typeof AuthenticatedAlimentacaoRoute
   AuthenticatedAlimentosRoute: typeof AuthenticatedAlimentosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEvolucaoFisicaRoute: typeof AuthenticatedEvolucaoFisicaRoute
+  AuthenticatedHidratacaoRoute: typeof AuthenticatedHidratacaoRoute
   AuthenticatedHistoricoTreinosRoute: typeof AuthenticatedHistoricoTreinosRoute
   AuthenticatedMeuTreinoRoute: typeof AuthenticatedMeuTreinoRoute
+  AuthenticatedModelosTreinoRoute: typeof AuthenticatedModelosTreinoRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedPlanejamentoSemanalRoute: typeof AuthenticatedPlanejamentoSemanalRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
+  AuthenticatedTreinoHojeRoute: typeof AuthenticatedTreinoHojeRoute
   AuthenticatedTreinosRoute: typeof AuthenticatedTreinosRoute
 }
 
@@ -259,10 +362,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAlimentacaoRoute: AuthenticatedAlimentacaoRoute,
   AuthenticatedAlimentosRoute: AuthenticatedAlimentosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEvolucaoFisicaRoute: AuthenticatedEvolucaoFisicaRoute,
+  AuthenticatedHidratacaoRoute: AuthenticatedHidratacaoRoute,
   AuthenticatedHistoricoTreinosRoute: AuthenticatedHistoricoTreinosRoute,
   AuthenticatedMeuTreinoRoute: AuthenticatedMeuTreinoRoute,
+  AuthenticatedModelosTreinoRoute: AuthenticatedModelosTreinoRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedPlanejamentoSemanalRoute: AuthenticatedPlanejamentoSemanalRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
+  AuthenticatedTreinoHojeRoute: AuthenticatedTreinoHojeRoute,
   AuthenticatedTreinosRoute: AuthenticatedTreinosRoute,
 }
 

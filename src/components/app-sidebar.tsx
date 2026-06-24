@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, UtensilsCrossed, Apple, User, LogOut, BarChart3, Dumbbell, ClipboardList, History } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, Apple, User, LogOut, BarChart3, Dumbbell, ClipboardList, History, Calendar, CalendarDays, Droplet, Camera, Layers } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -20,13 +20,21 @@ const nutricaoItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Minha Alimentação", url: "/alimentacao", icon: UtensilsCrossed },
   { title: "Alimentos", url: "/alimentos", icon: Apple },
+  { title: "Hidratação", url: "/hidratacao", icon: Droplet },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];
 
 const treinoItems = [
+  { title: "Treino de Hoje", url: "/treino-hoje", icon: Calendar },
+  { title: "Modelos de Treino", url: "/modelos-treino", icon: Layers },
+  { title: "Planejamento Semanal", url: "/planejamento-semanal", icon: CalendarDays },
   { title: "Exercícios", url: "/treinos", icon: Dumbbell },
   { title: "Meu Treino", url: "/meu-treino", icon: ClipboardList },
   { title: "Histórico", url: "/historico-treinos", icon: History },
+];
+
+const corpoItems = [
+  { title: "Evolução Física", url: "/evolucao-fisica", icon: Camera },
 ];
 
 const contaItems = [
@@ -86,6 +94,7 @@ export function AppSidebar() {
       <SidebarContent>
         {renderGroup("Nutrição", nutricaoItems)}
         {renderGroup("Treinos", treinoItems)}
+        {renderGroup("Corpo", corpoItems)}
         {renderGroup("Conta", contaItems)}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">

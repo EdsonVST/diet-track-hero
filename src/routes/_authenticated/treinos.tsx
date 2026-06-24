@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Dumbbell } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Dumbbell, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/treinos")({
@@ -114,13 +114,14 @@ function ExerciciosPage() {
                   {e.descricao && <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{e.descricao}</div>}
                 </div>
                 <div className="flex gap-1 shrink-0">
+                  <ExerciseDialog ex={e} cats={cats.data ?? []} onSaved={() => qc.invalidateQueries({ queryKey: ["exercises"] })}>
+                    <Button variant="ghost" size="icon" title="Editar"><Pencil className="h-4 w-4" /></Button>
+                  </ExerciseDialog>
+                  <ExerciseDialog duplicateFrom={e} cats={cats.data ?? []} onSaved={() => qc.invalidateQueries({ queryKey: ["exercises"] })}>
+                    <Button variant="ghost" size="icon" title="Duplicar"><Copy className="h-4 w-4" /></Button>
+                  </ExerciseDialog>
                   {mine && (
-                    <ExerciseDialog ex={e} cats={cats.data ?? []} onSaved={() => qc.invalidateQueries({ queryKey: ["exercises"] })}>
-                      <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
-                    </ExerciseDialog>
-                  )}
-                  {mine && (
-                    <Button variant="ghost" size="icon" onClick={() => del.mutate(e.id)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" title="Excluir" onClick={() => { if (confirm("Excluir este exercício?")) del.mutate(e.id); }}><Trash2 className="h-4 w-4" /></Button>
                   )}
                 </div>
               </CardContent>
@@ -135,14 +136,15 @@ function ExerciciosPage() {
   );
 }
 
-function ExerciseDialog({ ex, cats, children, onSaved }: { ex?: Exercise; cats: Array<{ id: string; nome: string }>; children: React.ReactNode; onSaved: () => void }) {
+function ExerciseDialog({ ex, duplicateFrom, cats, children, onSaved }: { ex?: Exercise; duplicateFrom?: Exercise; cats: Array<{ id: string; nome: string }>; children: React.ReactNode; onSaved: () => void }) {
+  const src = ex ?? duplicateFrom;
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(() => ({
-    nome: ex?.nome ?? "",
-    categoria_id: ex?.categoria_id ?? "",
-    grupo_muscular: ex?.grupo_muscular ?? "",
-    equipamento: ex?.equipamento ?? "",
-    descricao: ex?.descricao ?? "",
+    nome: duplicateFrom ? `${duplicateFrom.nome} (cópia)` : (src?.nome ?? ""),
+    categoria_id: src?.categoria_id ?? "",
+    grupo_muscular: src?.grupo_muscular ?? "",
+    equipamento: src?.equipamento ?? "",
+    descricao: src?.descricao ?? "",
   }));
 
   const save = async () => {
@@ -163,7 +165,7 @@ function ExerciseDialog({ ex, cats, children, onSaved }: { ex?: Exercise; cats: 
       if (!u.user) return toast.error("Não autenticado");
       const { error } = await supabase.from("exercises").insert({ ...payload, user_id: u.user.id, fonte: "usuario" });
       if (error) return toast.error(error.message);
-      toast.success("Exercício criado");
+      toast.success(duplicateFrom ? "Exercício duplicado" : "Exercício criado");
     }
     onSaved(); setOpen(false);
   };

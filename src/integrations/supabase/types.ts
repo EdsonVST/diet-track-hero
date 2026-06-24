@@ -340,6 +340,198 @@ export type Database = {
         }
         Relationships: []
       }
+      progress_photos: {
+        Row: {
+          categoria: string
+          created_at: string
+          data: string
+          id: string
+          observacoes: string | null
+          peso_kg: number | null
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          data?: string
+          id?: string
+          observacoes?: string | null
+          peso_kg?: number | null
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          data?: string
+          id?: string
+          observacoes?: string | null
+          peso_kg?: number | null
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      template_exercises: {
+        Row: {
+          created_at: string
+          descanso_segundos: number
+          exercise_id: string
+          id: string
+          observacoes: string | null
+          ordem: number
+          repeticoes: string
+          series: number
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          descanso_segundos?: number
+          exercise_id: string
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          repeticoes?: string
+          series?: number
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          descanso_segundos?: number
+          exercise_id?: string
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          repeticoes?: string
+          series?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_exercises_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workout_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      water_goals: {
+        Row: {
+          meta_ml: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          meta_ml?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          meta_ml?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      water_logs: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          quantidade_ml: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          id?: string
+          quantidade_ml: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          quantidade_ml?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_plan_days: {
+        Row: {
+          dia_semana: number
+          id: string
+          plan_id: string
+          rotulo: string | null
+          template_id: string | null
+        }
+        Insert: {
+          dia_semana: number
+          id?: string
+          plan_id: string
+          rotulo?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          dia_semana?: number
+          id?: string
+          plan_id?: string
+          rotulo?: string | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_plan_days_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_plan_days_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workout_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_plans: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       workout_exercises: {
         Row: {
           created_at: string
@@ -390,6 +582,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workout_templates: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          objetivo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          objetivo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          objetivo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       workouts: {
         Row: {
