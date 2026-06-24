@@ -150,7 +150,7 @@ function ExerciseLogger({ sessionId, templateEx }: { sessionId: string; template
   const ex = existing.data;
   const pesoVal = peso !== "" ? Number(peso) : (ex?.peso ?? null);
   const seriesVal = series !== "" ? Number(series) : (ex?.series ?? templateEx.series);
-  const repsVal = reps !== "" ? Number(reps) : (ex?.repeticoes ?? Number(templateEx.repeticoes) || 10);
+  const repsVal = reps !== "" ? Number(reps) : ((ex?.repeticoes ?? Number(templateEx.repeticoes)) || 10);
   const obsVal = obs || ex?.observacoes || "";
 
   const save = useMutation({
