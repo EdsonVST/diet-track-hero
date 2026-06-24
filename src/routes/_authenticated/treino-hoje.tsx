@@ -69,7 +69,7 @@ function TreinoHojePage() {
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("");
-      const { data, error } = await supabase.from("workouts").insert({ user_id: u.user.id, data: today, nome: dayQ.data?.workout_templates?.nome ?? "Treino" }).select().single();
+      const { data, error } = await supabase.from("workouts").insert({ user_id: u.user.id, data: today, observacoes: dayQ.data?.workout_templates?.nome ?? "Treino" }).select().single();
       if (error) throw error;
       return data;
     },
