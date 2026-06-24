@@ -94,6 +94,7 @@ export function AppSidebar() {
       <SidebarContent>
         {renderGroup("Nutrição", nutricaoItems)}
         {renderGroup("Treinos", treinoItems)}
+        {renderGroup("Corpo", corpoItems)}
         {renderGroup("Conta", contaItems)}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
