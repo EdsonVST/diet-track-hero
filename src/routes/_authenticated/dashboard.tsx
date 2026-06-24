@@ -104,7 +104,10 @@ function DashboardPage() {
         })}
       </div>
 
+      <FitnessCards />
+
       <Card>
+
         <CardHeader>
           <CardTitle>Refeições de hoje</CardTitle>
         </CardHeader>
