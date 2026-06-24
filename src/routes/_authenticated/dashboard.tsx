@@ -138,3 +138,77 @@ function DashboardPage() {
     </div>
   );
 }
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function FitnessCards() {
+  const today = todayISO();
+  const dow = new Date().getDay();
+
+  const waterGoal = useQuery({ queryKey: ["water_goal"], queryFn: async () => (await supabase.from("water_goals").select("*").maybeSingle()).data });
+  const waterToday = useQuery({
+    queryKey: ["water_today", today],
+    queryFn: async () => (await supabase.from("water_logs").select("quantidade_ml").eq("data", today)).data ?? [],
+  });
+  const lastPhoto = useQuery({
+    queryKey: ["last_photo"],
+    queryFn: async () => (await supabase.from("progress_photos").select("data").order("data", { ascending: false }).limit(1).maybeSingle()).data,
+  });
+  const todayWorkout = useQuery({
+    queryKey: ["today-workout-card", dow],
+    queryFn: async () => {
+      const { data: plan } = await supabase.from("weekly_plans").select("id").eq("ativo", true).maybeSingle();
+      if (!plan) return null;
+      const { data: day } = await supabase.from("weekly_plan_days").select("*,workout_templates(nome)").eq("plan_id", plan.id).eq("dia_semana", dow).maybeSingle();
+      return day;
+    },
+  });
+
+  const meta = waterGoal.data?.meta_ml ?? 3000;
+  const consumido = (waterToday.data ?? []).reduce((s, l) => s + l.quantidade_ml, 0);
+  const pct = Math.min(100, (consumido / meta) * 100);
+
+  const daysSincePhoto = lastPhoto.data?.data
+    ? Math.floor((Date.now() - new Date(lastPhoto.data.data).getTime()) / 86400000)
+    : null;
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <Card><CardContent className="p-5">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="h-10 w-10 grid place-items-center rounded-xl bg-sky-500/10 text-sky-500"><Droplet className="h-5 w-5" /></div>
+          <div><div className="text-xs text-muted-foreground">Hidratação hoje</div>
+          <div className="text-xl font-bold">{(consumido / 1000).toFixed(2)}L <span className="text-sm text-muted-foreground">/ {(meta / 1000).toFixed(1)}L</span></div></div>
+        </div>
+        <Progress value={pct} className="h-2" />
+        <Button asChild variant="link" size="sm" className="px-0 mt-1"><Link to="/hidratacao">Registrar</Link></Button>
+      </CardContent></Card>
+
+      <Card><CardContent className="p-5">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 grid place-items-center rounded-xl bg-primary/10 text-primary"><Dumbbell className="h-5 w-5" /></div>
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">Treino de hoje</div>
+            <div className="font-bold truncate">{todayWorkout.data?.workout_templates?.nome ?? todayWorkout.data?.rotulo ?? "Descanso"}</div>
+          </div>
+        </div>
+        <Button asChild variant="link" size="sm" className="px-0 mt-1"><Link to="/treino-hoje">Abrir treino</Link></Button>
+      </CardContent></Card>
+
+      <Card><CardContent className="p-5">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 grid place-items-center rounded-xl bg-accent/30 text-accent-foreground"><Camera className="h-5 w-5" /></div>
+          <div>
+            <div className="text-xs text-muted-foreground">Última foto</div>
+            <div className="font-bold">{lastPhoto.data ? `${daysSincePhoto} ${daysSincePhoto === 1 ? "dia" : "dias"} atrás` : "Sem fotos"}</div>
+          </div>
+        </div>
+        <Button asChild variant="link" size="sm" className="px-0 mt-1"><Link to="/evolucao-fisica">Ver evolução</Link></Button>
+      </CardContent></Card>
+    </div>
+  );
+}
+
