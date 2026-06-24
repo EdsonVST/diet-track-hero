@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { computeNutrients, emptyTotals, sumTotals, MEAL_LABELS } from "@/lib/nutrition";
-import { Flame, Beef, Wheat, Droplet } from "lucide-react";
+import { Flame, Beef, Wheat, Droplet, Camera, Dumbbell } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
