@@ -175,7 +175,7 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<TemplateEx> }) => {
+    mutationFn: async ({ id, patch }: { id: string; patch: { series?: number; repeticoes?: string; descanso_segundos?: number; observacoes?: string | null } }) => {
       const { error } = await supabase.from("template_exercises").update(patch).eq("id", id);
       if (error) throw error;
     },
