@@ -136,14 +136,15 @@ function ExerciciosPage() {
   );
 }
 
-function ExerciseDialog({ ex, cats, children, onSaved }: { ex?: Exercise; cats: Array<{ id: string; nome: string }>; children: React.ReactNode; onSaved: () => void }) {
+function ExerciseDialog({ ex, duplicateFrom, cats, children, onSaved }: { ex?: Exercise; duplicateFrom?: Exercise; cats: Array<{ id: string; nome: string }>; children: React.ReactNode; onSaved: () => void }) {
+  const src = ex ?? duplicateFrom;
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(() => ({
-    nome: ex?.nome ?? "",
-    categoria_id: ex?.categoria_id ?? "",
-    grupo_muscular: ex?.grupo_muscular ?? "",
-    equipamento: ex?.equipamento ?? "",
-    descricao: ex?.descricao ?? "",
+    nome: duplicateFrom ? `${duplicateFrom.nome} (cópia)` : (src?.nome ?? ""),
+    categoria_id: src?.categoria_id ?? "",
+    grupo_muscular: src?.grupo_muscular ?? "",
+    equipamento: src?.equipamento ?? "",
+    descricao: src?.descricao ?? "",
   }));
 
   const save = async () => {
@@ -164,7 +165,7 @@ function ExerciseDialog({ ex, cats, children, onSaved }: { ex?: Exercise; cats: 
       if (!u.user) return toast.error("Não autenticado");
       const { error } = await supabase.from("exercises").insert({ ...payload, user_id: u.user.id, fonte: "usuario" });
       if (error) return toast.error(error.message);
-      toast.success("Exercício criado");
+      toast.success(duplicateFrom ? "Exercício duplicado" : "Exercício criado");
     }
     onSaved(); setOpen(false);
   };
