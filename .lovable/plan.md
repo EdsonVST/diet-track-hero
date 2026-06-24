@@ -1,82 +1,59 @@
-## Escopo da Atualização
+# Plano — Expansão NutriControl (Treinos, Hidratação, Evolução Física)
 
-Três grandes módulos adicionados ao NutriControl, **sem remover nada do existente**:
+Tudo é aditivo. Nada existente é removido ou alterado de forma incompatível.
 
-1. **Relatórios avançados** (com gráficos e exportação PDF/XLSX/CSV)
-2. **Nutrição expandida** (vitaminas + minerais nos alimentos)
-3. **Módulo de Treinos** completo (exercícios, treinos, progressão)
+## 1. Banco de dados (1 migration)
 
----
+Novas tabelas (todas com RLS por `user_id`, grants para `authenticated` + `service_role`, trigger `updated_at`):
 
-## 1. Banco de Dados (migrations aditivas)
+- `workout_templates` — id, user_id, nome, descricao, objetivo, ativo
+- `template_exercises` — id, template_id, exercise_id, ordem, series, repeticoes, descanso_segundos, observacoes
+- `weekly_plans` — id, user_id, nome, ativo
+- `weekly_plan_days` — id, plan_id, dia_semana (0–6), template_id (nullable p/ descanso), rotulo
+- `water_goals` — id, user_id, meta_ml (default 3000)
+- `water_logs` — id, user_id, data, quantidade_ml, criado_em
+- `photo_categories` — enum/tabela seed: frente, lado, costas
+- `progress_photos` — id, user_id, data, categoria, storage_path, peso_kg, observacoes
 
-### 1a. Expansão `foods` (colunas novas, nullable)
-Vitaminas: `vit_a, vit_b1, vit_b2, vit_b3, vit_b5, vit_b6, vit_b7, vit_b9, vit_b12, vit_c, vit_d, vit_e, vit_k`
-Minerais: `calcio, ferro, magnesio, fosforo, potassio, zinco, selenio` (sódio já existe)
+Reutilizamos `workouts` + `workout_exercises` já existentes para o "Treino de Hoje" / histórico (já têm peso/séries/reps/observações). Não há migração destrutiva.
 
-### 1b. Novas tabelas para Treinos
-- `exercise_categories` (nome, descricao)
-- `exercises` (nome, categoria_id, grupo_muscular, descricao, equipamento, ativo, user_id nullable = sistema/usuário)
-- `workouts` (user_id, data, horario, duracao_min, observacoes)
-- `workout_exercises` (workout_id, exercise_id, peso, series, repeticoes, observacoes, ordem)
+Ajuste em `exercises`: relaxar RLS para permitir **UPDATE** dos exercícios padrão (`user_id IS NULL`) pelo próprio usuário autenticado — sem deletar. Mantém leitura pública autenticada.
 
-RLS: usuário só vê os próprios `workouts`/`workout_exercises`; `exercises` e `exercise_categories` legíveis por todos autenticados, edição apenas no próprio (`user_id = auth.uid()`).
+Storage: bucket `progress-photos` (privado) + policies por `user_id` no prefixo do path.
 
-Seed: categorias (Peito, Costas, Pernas, Cardio) + exercícios de exemplo listados.
+## 2. Frontend — novas rotas
 
----
+Todas sob `_authenticated/`:
 
-## 2. Frontend — novas páginas
+- `/exercicios` (existente `/treinos` renomeado conceitualmente): adicionar **Editar** e **Duplicar** em qualquer exercício (inclusive padrões).
+- `/modelos-treino` — CRUD de `workout_templates` + exercícios (séries/reps/descanso/obs). Duplicar modelo, importar exercícios de outro modelo.
+- `/planejamento-semanal` — grade Seg→Dom, associar template a cada dia, múltiplos planos, duplicar semana, ativar plano.
+- `/treino-hoje` — lê plano ativo + dia atual → renderiza template → registra `workouts` + `workout_exercises`. Mostra comparação com último registro do mesmo exercício (Δ peso).
+- `/hidratacao` — meta, botões rápidos (+200/+300/+500/+1L), input manual, progresso do dia, histórico, gráficos diário/semanal/mensal.
+- `/evolucao-fisica` — upload por categoria (Frente/Lado/Costas), timeline, comparador lado-a-lado entre duas datas, exibição com peso/IMC do dia.
 
-Sidebar atualizada: Dashboard · Alimentação · Alimentos · **Treinos** · **Histórico Treinos** · **Relatórios** · Perfil
+## 3. Dashboard
 
-### `/relatorios`
-- Seletor de período (Hoje / 7d / 30d / Mês / Ano / Personalizado com date-range)
-- Cards de resumo (kcal, P, C, G, Fibra)
-- Análise por refeição (4 cards)
-- Top 10 alimentos mais consumidos
-- Gráficos de linha (Recharts) — evolução diária dos 5 macros/fibra
-- Botões: Exportar PDF / XLSX / CSV
-  - PDF: `jspdf` + `jspdf-autotable` com capa (nome do usuário, período, data geração)
-  - XLSX: `xlsx` lib
-  - CSV: gerado nativo
-- Colunas exportadas: Data, Refeição, Alimento, Quantidade, Kcal, P, C, G, Fibra, Vitaminas (agregadas), Minerais (agregados)
+Adicionar cards: Água hoje + meta, Treino de hoje, Última foto (+ dias desde), Evolução de carga (top exercício).
 
-### `/alimentos` (expansão)
-- Form com abas: Macros / Vitaminas / Minerais
-- Detalhe com gráfico de pizza (composição calórica P/C/G) + listagem vitaminas/minerais
+## 4. Sidebar
 
-### `/treinos` (cadastro de exercícios — admin do usuário)
-- CRUD igual ao de Alimentos
-- Filtro por grupo muscular / categoria
+Acrescentar entradas: Modelos de Treino, Planejamento Semanal, Treino de Hoje, Hidratação, Evolução Física. Manter as existentes.
 
-### `/meu-treino`
-- Seleção da data
-- Adicionar múltiplos exercícios com peso/séries/reps/obs
-- Lista do treino do dia
-- Para cada exercício: última carga e melhor carga (consulta histórico)
+## 5. Detalhes técnicos
 
-### `/historico-treinos`
-- Painel: treinos no mês, exercícios mais executados, frequência semanal, tempo médio
-- Gráficos: evolução de carga por exercício (selecionável), volume por grupo muscular, frequência semanal
+- Uploads via `supabase.storage` (bucket privado + signed URLs).
+- Gráficos com `recharts` (já instalado).
+- Cálculo de IMC reutiliza perfil/altura existente.
+- Comparação de carga: `select ... order by data desc limit 1` por exercise_id antes do registro.
+- Validação com Zod nos formulários.
+- Responsivo mobile (grid → stack).
 
----
+## 6. Entrega
 
-## 3. Dependências a instalar
-`recharts` (provavelmente já), `jspdf`, `jspdf-autotable`, `xlsx`, `date-fns` (provavelmente já).
+1. Migration (tabelas + RLS + grants + bucket policies + ajuste exercises UPDATE).
+2. Após aprovação: tipos regenerados → código frontend + libs auxiliares (`src/lib/workouts.ts`, `src/lib/water.ts`, `src/lib/photos.ts`).
+3. Sidebar + Dashboard atualizados.
+4. Build verde.
 
----
-
-## 4. Detalhes técnicos
-- Toda lógica de cálculo nutricional reutiliza `src/lib/nutrition.ts` (expandida com micros).
-- Novo `src/lib/reports.ts` com agregadores por período + exportadores.
-- Tipos Supabase serão regenerados após cada migration.
-- Fix paralelo do erro de hidratação na página `/auth` (usar `ClientOnly` ou remover branch SSR).
-
----
-
-## Entrega
-- Migrations aprovadas → seed dos exercícios → código frontend → build verde.
-- Nada existente é removido; tudo é aditivo.
-
-Posso prosseguir?
+Sem dados mockados; tudo persistido no Supabase.
