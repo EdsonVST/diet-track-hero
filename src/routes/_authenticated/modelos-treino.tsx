@@ -187,6 +187,19 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
     onSuccess: () => qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }),
   });
 
+  const reorder = useMutation({
+    mutationFn: async ({ id, dir }: { id: string; dir: -1 | 1 }) => {
+      const items = list.data ?? [];
+      const idx = items.findIndex((i) => i.id === id);
+      const swapIdx = idx + dir;
+      if (idx < 0 || swapIdx < 0 || swapIdx >= items.length) return;
+      const a = items[idx], b = items[swapIdx];
+      await supabase.from("template_exercises").update({ ordem: b.ordem }).eq("id", a.id);
+      await supabase.from("template_exercises").update({ ordem: a.ordem }).eq("id", b.id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }),
+  });
+
   const importFrom = useMutation({
     mutationFn: async (fromId: string) => {
       const { data: exs } = await supabase.from("template_exercises").select("*").eq("template_id", fromId);
