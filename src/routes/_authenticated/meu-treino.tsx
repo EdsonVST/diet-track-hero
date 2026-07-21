@@ -142,9 +142,18 @@ function MeuTreinoPage() {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
           <CardTitle className="text-base">Exercícios da sessão</CardTitle>
-          <AddExerciseDialog exercises={exercisesQ.data ?? []} onAdd={(p) => addEx.mutate(p)} />
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select onValueChange={(v) => importTemplate.mutate(v)}>
+              <SelectTrigger className="h-9 w-52"><SelectValue placeholder="Usar modelo..." /></SelectTrigger>
+              <SelectContent>
+                {(templatesQ.data ?? []).map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
+                {(templatesQ.data ?? []).length === 0 && <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum modelo</div>}
+              </SelectContent>
+            </Select>
+            <AddExerciseDialog exercises={exercisesQ.data ?? []} onAdd={(p) => addEx.mutate(p)} />
+          </div>
         </CardHeader>
         <CardContent className="space-y-2">
           {items.map((it) => (
