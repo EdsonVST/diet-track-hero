@@ -88,6 +88,38 @@ function MeuTreinoPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["workout"] }),
   });
 
+  const templatesQ = useQuery({
+    queryKey: ["workout_templates_active"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("workout_templates").select("id,nome").eq("ativo", true).order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const importTemplate = useMutation({
+    mutationFn: async (templateId: string) => {
+      const w = await ensureWorkout();
+      const { data: exs, error } = await supabase.from("template_exercises").select("*").eq("template_id", templateId).order("ordem");
+      if (error) throw error;
+      if (!exs || exs.length === 0) throw new Error("Modelo sem exercícios");
+      const start = (w as any).workout_exercises?.length ?? 0;
+      const rows = exs.map((e, i) => ({
+        workout_id: w.id,
+        exercise_id: e.exercise_id,
+        ordem: start + i,
+        series: e.series,
+        repeticoes: Number(e.repeticoes) || 0,
+        peso: 0,
+        observacoes: e.observacoes,
+      }));
+      const { error: insErr } = await supabase.from("workout_exercises").insert(rows);
+      if (insErr) throw insErr;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["workout"] }); toast.success("Modelo importado"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const w = workoutQ.data;
   const items = (w?.workout_exercises ?? []) as any[];
 
@@ -110,9 +142,18 @@ function MeuTreinoPage() {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
           <CardTitle className="text-base">Exercícios da sessão</CardTitle>
-          <AddExerciseDialog exercises={exercisesQ.data ?? []} onAdd={(p) => addEx.mutate(p)} />
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select onValueChange={(v) => importTemplate.mutate(v)}>
+              <SelectTrigger className="h-9 w-52"><SelectValue placeholder="Usar modelo..." /></SelectTrigger>
+              <SelectContent>
+                {(templatesQ.data ?? []).map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
+                {(templatesQ.data ?? []).length === 0 && <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum modelo</div>}
+              </SelectContent>
+            </Select>
+            <AddExerciseDialog exercises={exercisesQ.data ?? []} onAdd={(p) => addEx.mutate(p)} />
+          </div>
         </CardHeader>
         <CardContent className="space-y-2">
           {items.map((it) => (

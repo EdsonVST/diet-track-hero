@@ -534,6 +534,7 @@ export type Database = {
       }
       workout_exercises: {
         Row: {
+          concluido: boolean
           created_at: string
           exercise_id: string
           id: string
@@ -545,6 +546,7 @@ export type Database = {
           workout_id: string
         }
         Insert: {
+          concluido?: boolean
           created_at?: string
           exercise_id: string
           id?: string
@@ -556,6 +558,7 @@ export type Database = {
           workout_id: string
         }
         Update: {
+          concluido?: boolean
           created_at?: string
           exercise_id?: string
           id?: string
@@ -621,6 +624,7 @@ export type Database = {
           created_at: string
           data: string
           duracao_min: number | null
+          finalizado_em: string | null
           horario: string | null
           id: string
           observacoes: string | null
@@ -631,6 +635,7 @@ export type Database = {
           created_at?: string
           data?: string
           duracao_min?: number | null
+          finalizado_em?: string | null
           horario?: string | null
           id?: string
           observacoes?: string | null
@@ -641,6 +646,7 @@ export type Database = {
           created_at?: string
           data?: string
           duracao_min?: number | null
+          finalizado_em?: string | null
           horario?: string | null
           id?: string
           observacoes?: string | null
