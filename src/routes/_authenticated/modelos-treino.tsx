@@ -222,11 +222,15 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
   return (
     <div className="border-t bg-muted/30 p-4 space-y-3">
       <div className="space-y-2">
-        {(list.data ?? []).map((te) => (
-          <div key={te.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-2 items-center bg-background rounded-lg p-2 border">
+        {(list.data ?? []).map((te, i) => (
+          <div key={te.id} className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] gap-2 items-center bg-background rounded-lg p-2 border">
+            <div className="flex flex-col">
+              <Button variant="ghost" size="icon" className="h-6 w-6" disabled={i === 0} title="Mover para cima" onClick={() => reorder.mutate({ id: te.id, dir: -1 })}><ArrowUp className="h-3 w-3" /></Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" disabled={i === (list.data?.length ?? 0) - 1} title="Mover para baixo" onClick={() => reorder.mutate({ id: te.id, dir: 1 })}><ArrowDown className="h-3 w-3" /></Button>
+            </div>
             <div className="h-8 w-8 grid place-items-center rounded-md bg-primary/10 text-primary"><Dumbbell className="h-4 w-4" /></div>
             <div className="min-w-0">
-              <div className="font-medium text-sm truncate">{te.exercises?.nome}</div>
+              <div className="font-medium text-sm truncate">{i + 1}. {te.exercises?.nome}</div>
               <div className="text-xs text-muted-foreground">
                 <input type="number" defaultValue={te.series} onBlur={(e) => update.mutate({ id: te.id, patch: { series: Number(e.target.value) } })} className="w-12 bg-transparent border rounded px-1" /> séries ·{" "}
                 <input type="text" defaultValue={te.repeticoes} onBlur={(e) => update.mutate({ id: te.id, patch: { repeticoes: e.target.value } })} className="w-16 bg-transparent border rounded px-1" /> reps ·{" "}
