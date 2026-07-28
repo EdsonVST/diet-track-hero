@@ -200,18 +200,35 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
     onSuccess: () => qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }),
   });
 
-  const reorder = useMutation({
-    mutationFn: async ({ id, dir }: { id: string; dir: -1 | 1 }) => {
-      const items = list.data ?? [];
-      const idx = items.findIndex((i) => i.id === id);
-      const swapIdx = idx + dir;
-      if (idx < 0 || swapIdx < 0 || swapIdx >= items.length) return;
-      const a = items[idx], b = items[swapIdx];
-      await supabase.from("template_exercises").update({ ordem: b.ordem }).eq("id", a.id);
-      await supabase.from("template_exercises").update({ ordem: a.ordem }).eq("id", b.id);
+  const persistOrder = useMutation({
+    mutationFn: async (items: TemplateEx[]) => {
+      await Promise.all(
+        items.map((it, idx) =>
+          it.ordem === idx ? null : supabase.from("template_exercises").update({ ordem: idx }).eq("id", it.id),
+        ),
+      );
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }),
+    onError: (e: Error) => { toast.error(e.message); qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }); },
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const items = list.data ?? [];
+    const from = items.findIndex((i) => i.id === active.id);
+    const to = items.findIndex((i) => i.id === over.id);
+    if (from < 0 || to < 0) return;
+    const next = arrayMove(items, from, to).map((it, idx) => ({ ...it, ordem: idx }));
+    qc.setQueryData(["template_exercises", templateId], next);
+    persistOrder.mutate(next);
+  };
 
   const importFrom = useMutation({
     mutationFn: async (fromId: string) => {
