@@ -2,6 +2,7 @@ import { createFileRoute, redirect, Outlet } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { useWaterReminderScheduler } from "@/lib/water-reminders";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
