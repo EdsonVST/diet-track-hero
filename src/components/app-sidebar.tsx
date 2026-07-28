@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, UtensilsCrossed, Apple, User, LogOut, BarChart3, Dumbbell, ClipboardList, History, Calendar, CalendarDays, Droplet, Camera, Layers } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, Apple, User, LogOut, BarChart3, Dumbbell, History, Calendar, CalendarDays, Droplet, Camera, Layers } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
