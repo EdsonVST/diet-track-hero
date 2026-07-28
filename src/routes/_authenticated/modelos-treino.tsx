@@ -9,8 +9,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Copy, ChevronDown, ChevronUp, Dumbbell, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, ChevronDown, ChevronUp, Dumbbell, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export const Route = createFileRoute("/_authenticated/modelos-treino")({
   component: ModelosTreinoPage,
@@ -187,18 +200,35 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
     onSuccess: () => qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }),
   });
 
-  const reorder = useMutation({
-    mutationFn: async ({ id, dir }: { id: string; dir: -1 | 1 }) => {
-      const items = list.data ?? [];
-      const idx = items.findIndex((i) => i.id === id);
-      const swapIdx = idx + dir;
-      if (idx < 0 || swapIdx < 0 || swapIdx >= items.length) return;
-      const a = items[idx], b = items[swapIdx];
-      await supabase.from("template_exercises").update({ ordem: b.ordem }).eq("id", a.id);
-      await supabase.from("template_exercises").update({ ordem: a.ordem }).eq("id", b.id);
+  const persistOrder = useMutation({
+    mutationFn: async (items: TemplateEx[]) => {
+      await Promise.all(
+        items.map((it, idx) =>
+          it.ordem === idx ? null : supabase.from("template_exercises").update({ ordem: idx }).eq("id", it.id),
+        ),
+      );
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }),
+    onError: (e: Error) => { toast.error(e.message); qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }); },
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const items = list.data ?? [];
+    const from = items.findIndex((i) => i.id === active.id);
+    const to = items.findIndex((i) => i.id === over.id);
+    if (from < 0 || to < 0) return;
+    const next = arrayMove(items, from, to).map((it, idx) => ({ ...it, ordem: idx }));
+    qc.setQueryData(["template_exercises", templateId], next);
+    persistOrder.mutate(next);
+  };
 
   const importFrom = useMutation({
     mutationFn: async (fromId: string) => {
@@ -221,26 +251,24 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
 
   return (
     <div className="border-t bg-muted/30 p-4 space-y-3">
-      <div className="space-y-2">
-        {(list.data ?? []).map((te, i) => (
-          <div key={te.id} className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] gap-2 items-center bg-background rounded-lg p-2 border">
-            <div className="flex flex-col">
-              <Button variant="ghost" size="icon" className="h-6 w-6" disabled={i === 0} title="Mover para cima" onClick={() => reorder.mutate({ id: te.id, dir: -1 })}><ArrowUp className="h-3 w-3" /></Button>
-              <Button variant="ghost" size="icon" className="h-6 w-6" disabled={i === (list.data?.length ?? 0) - 1} title="Mover para baixo" onClick={() => reorder.mutate({ id: te.id, dir: 1 })}><ArrowDown className="h-3 w-3" /></Button>
-            </div>
-            <div className="h-8 w-8 grid place-items-center rounded-md bg-primary/10 text-primary"><Dumbbell className="h-4 w-4" /></div>
-            <div className="min-w-0">
-              <div className="font-medium text-sm truncate">{i + 1}. {te.exercises?.nome}</div>
-              <div className="text-xs text-muted-foreground">
-                <input type="number" defaultValue={te.series} onBlur={(e) => update.mutate({ id: te.id, patch: { series: Number(e.target.value) } })} className="w-12 bg-transparent border rounded px-1" /> séries ·{" "}
-                <input type="text" defaultValue={te.repeticoes} onBlur={(e) => update.mutate({ id: te.id, patch: { repeticoes: e.target.value } })} className="w-16 bg-transparent border rounded px-1" /> reps ·{" "}
-                <input type="number" defaultValue={te.descanso_segundos} onBlur={(e) => update.mutate({ id: te.id, patch: { descanso_segundos: Number(e.target.value) } })} className="w-14 bg-transparent border rounded px-1" />s descanso
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" onClick={() => remove.mutate(te.id)}><Trash2 className="h-4 w-4" /></Button>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis, restrictToParentElement]} onDragEnd={onDragEnd}>
+        <SortableContext items={(list.data ?? []).map((te) => te.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-2">
+            {(list.data ?? []).map((te, i) => (
+              <SortableExercise
+                key={te.id}
+                te={te}
+                index={i}
+                onUpdate={(patch) => update.mutate({ id: te.id, patch })}
+                onRemove={() => remove.mutate(te.id)}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </SortableContext>
+      </DndContext>
+      {(list.data ?? []).length > 1 && (
+        <p className="text-[11px] text-muted-foreground">Arraste os exercícios pela alça para reordenar — a nova ordem é salva automaticamente.</p>
+      )}
 
       <div className="grid gap-2 md:grid-cols-[1fr_auto_auto_auto_auto] items-end p-3 rounded-lg border bg-background">
         <div>
@@ -269,6 +297,42 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
           </Select>
         </div>
       )}
+    </div>
+  );
+}
+
+type TemplateExPatch = { series?: number; repeticoes?: string; descanso_segundos?: number; observacoes?: string | null };
+
+function SortableExercise({ te, index, onUpdate, onRemove }: { te: TemplateEx; index: number; onUpdate: (patch: TemplateExPatch) => void; onRemove: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: te.id });
+  const style = { transform: CSS.Transform.toString(transform), transition: transition ?? "transform 200ms cubic-bezier(0.2, 0, 0, 1)" };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`grid grid-cols-[auto_auto_minmax(0,1fr)_auto] gap-2 items-center bg-background rounded-lg p-2 border ${isDragging ? "shadow-lg ring-2 ring-primary/40 z-10 relative opacity-90" : ""}`}
+    >
+      <button
+        type="button"
+        className="h-8 w-6 grid place-items-center text-muted-foreground cursor-grab active:cursor-grabbing touch-none"
+        title="Arraste para reordenar"
+        aria-label={`Reordenar ${te.exercises?.nome ?? "exercício"}`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <div className="h-8 w-8 grid place-items-center rounded-md bg-primary/10 text-primary"><Dumbbell className="h-4 w-4" /></div>
+      <div className="min-w-0">
+        <div className="font-medium text-sm truncate">{index + 1}. {te.exercises?.nome}</div>
+        <div className="text-xs text-muted-foreground">
+          <input type="number" defaultValue={te.series} onBlur={(e) => onUpdate({ series: Number(e.target.value) })} className="w-12 bg-transparent border rounded px-1" /> séries ·{" "}
+          <input type="text" defaultValue={te.repeticoes} onBlur={(e) => onUpdate({ repeticoes: e.target.value })} className="w-16 bg-transparent border rounded px-1" /> reps ·{" "}
+          <input type="number" defaultValue={te.descanso_segundos} onBlur={(e) => onUpdate({ descanso_segundos: Number(e.target.value) })} className="w-14 bg-transparent border rounded px-1" />s descanso
+        </div>
+      </div>
+      <Button variant="ghost" size="icon" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, UtensilsCrossed, Apple, User, LogOut, BarChart3, Dumbbell, ClipboardList, History, Calendar, CalendarDays, Droplet, Camera, Layers } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, Apple, User, LogOut, BarChart3, Dumbbell, History, Calendar, CalendarDays, Droplet, Camera, Layers } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -29,7 +29,6 @@ const treinoItems = [
   { title: "Modelos de Treino", url: "/modelos-treino", icon: Layers },
   { title: "Planejamento Semanal", url: "/planejamento-semanal", icon: CalendarDays },
   { title: "Exercícios", url: "/treinos", icon: Dumbbell },
-  { title: "Meu Treino", url: "/meu-treino", icon: ClipboardList },
   { title: "Histórico", url: "/historico-treinos", icon: History },
 ];
 

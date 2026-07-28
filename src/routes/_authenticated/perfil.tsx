@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { WaterRemindersCard } from "@/components/water-reminders-card";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   component: PerfilPage,
@@ -151,6 +152,8 @@ function PerfilPage() {
           <Button onClick={saveGoals}>Salvar metas</Button>
         </CardContent>
       </Card>
+
+      <WaterRemindersCard />
     </div>
   );
 }
