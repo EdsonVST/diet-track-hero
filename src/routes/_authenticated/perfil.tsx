@@ -152,6 +152,8 @@ function PerfilPage() {
           <Button onClick={saveGoals}>Salvar metas</Button>
         </CardContent>
       </Card>
+
+      <WaterRemindersCard />
     </div>
   );
 }
