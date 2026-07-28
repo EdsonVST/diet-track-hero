@@ -466,6 +466,30 @@ export type Database = {
         }
         Relationships: []
       }
+      water_reminders: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          horarios: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          horarios?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          horarios?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       weekly_plan_days: {
         Row: {
           dia_semana: number
