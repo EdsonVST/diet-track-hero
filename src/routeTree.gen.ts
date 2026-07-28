@@ -18,7 +18,6 @@ import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedPlanejamentoSemanalRouteImport } from './routes/_authenticated/planejamento-semanal'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedModelosTreinoRouteImport } from './routes/_authenticated/modelos-treino'
-import { Route as AuthenticatedMeuTreinoRouteImport } from './routes/_authenticated/meu-treino'
 import { Route as AuthenticatedHistoricoTreinosRouteImport } from './routes/_authenticated/historico-treinos'
 import { Route as AuthenticatedHidratacaoRouteImport } from './routes/_authenticated/hidratacao'
 import { Route as AuthenticatedEvolucaoFisicaRouteImport } from './routes/_authenticated/evolucao-fisica'
@@ -72,11 +71,6 @@ const AuthenticatedModelosTreinoRoute =
     path: '/modelos-treino',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedMeuTreinoRoute = AuthenticatedMeuTreinoRouteImport.update({
-  id: '/meu-treino',
-  path: '/meu-treino',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedHistoricoTreinosRoute =
   AuthenticatedHistoricoTreinosRouteImport.update({
     id: '/historico-treinos',
@@ -120,7 +114,6 @@ export interface FileRoutesByFullPath {
   '/evolucao-fisica': typeof AuthenticatedEvolucaoFisicaRoute
   '/hidratacao': typeof AuthenticatedHidratacaoRoute
   '/historico-treinos': typeof AuthenticatedHistoricoTreinosRoute
-  '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/modelos-treino': typeof AuthenticatedModelosTreinoRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/planejamento-semanal': typeof AuthenticatedPlanejamentoSemanalRoute
@@ -137,7 +130,6 @@ export interface FileRoutesByTo {
   '/evolucao-fisica': typeof AuthenticatedEvolucaoFisicaRoute
   '/hidratacao': typeof AuthenticatedHidratacaoRoute
   '/historico-treinos': typeof AuthenticatedHistoricoTreinosRoute
-  '/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/modelos-treino': typeof AuthenticatedModelosTreinoRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/planejamento-semanal': typeof AuthenticatedPlanejamentoSemanalRoute
@@ -156,7 +148,6 @@ export interface FileRoutesById {
   '/_authenticated/evolucao-fisica': typeof AuthenticatedEvolucaoFisicaRoute
   '/_authenticated/hidratacao': typeof AuthenticatedHidratacaoRoute
   '/_authenticated/historico-treinos': typeof AuthenticatedHistoricoTreinosRoute
-  '/_authenticated/meu-treino': typeof AuthenticatedMeuTreinoRoute
   '/_authenticated/modelos-treino': typeof AuthenticatedModelosTreinoRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/planejamento-semanal': typeof AuthenticatedPlanejamentoSemanalRoute
@@ -175,7 +166,6 @@ export interface FileRouteTypes {
     | '/evolucao-fisica'
     | '/hidratacao'
     | '/historico-treinos'
-    | '/meu-treino'
     | '/modelos-treino'
     | '/perfil'
     | '/planejamento-semanal'
@@ -192,7 +182,6 @@ export interface FileRouteTypes {
     | '/evolucao-fisica'
     | '/hidratacao'
     | '/historico-treinos'
-    | '/meu-treino'
     | '/modelos-treino'
     | '/perfil'
     | '/planejamento-semanal'
@@ -210,7 +199,6 @@ export interface FileRouteTypes {
     | '/_authenticated/evolucao-fisica'
     | '/_authenticated/hidratacao'
     | '/_authenticated/historico-treinos'
-    | '/_authenticated/meu-treino'
     | '/_authenticated/modelos-treino'
     | '/_authenticated/perfil'
     | '/_authenticated/planejamento-semanal'
@@ -290,13 +278,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModelosTreinoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/meu-treino': {
-      id: '/_authenticated/meu-treino'
-      path: '/meu-treino'
-      fullPath: '/meu-treino'
-      preLoaderRoute: typeof AuthenticatedMeuTreinoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/historico-treinos': {
       id: '/_authenticated/historico-treinos'
       path: '/historico-treinos'
@@ -349,7 +330,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEvolucaoFisicaRoute: typeof AuthenticatedEvolucaoFisicaRoute
   AuthenticatedHidratacaoRoute: typeof AuthenticatedHidratacaoRoute
   AuthenticatedHistoricoTreinosRoute: typeof AuthenticatedHistoricoTreinosRoute
-  AuthenticatedMeuTreinoRoute: typeof AuthenticatedMeuTreinoRoute
   AuthenticatedModelosTreinoRoute: typeof AuthenticatedModelosTreinoRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedPlanejamentoSemanalRoute: typeof AuthenticatedPlanejamentoSemanalRoute
@@ -365,7 +345,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEvolucaoFisicaRoute: AuthenticatedEvolucaoFisicaRoute,
   AuthenticatedHidratacaoRoute: AuthenticatedHidratacaoRoute,
   AuthenticatedHistoricoTreinosRoute: AuthenticatedHistoricoTreinosRoute,
-  AuthenticatedMeuTreinoRoute: AuthenticatedMeuTreinoRoute,
   AuthenticatedModelosTreinoRoute: AuthenticatedModelosTreinoRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedPlanejamentoSemanalRoute: AuthenticatedPlanejamentoSemanalRoute,
@@ -385,13 +364,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

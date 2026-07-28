@@ -29,7 +29,6 @@ const treinoItems = [
   { title: "Modelos de Treino", url: "/modelos-treino", icon: Layers },
   { title: "Planejamento Semanal", url: "/planejamento-semanal", icon: CalendarDays },
   { title: "Exercícios", url: "/treinos", icon: Dumbbell },
-  { title: "Meu Treino", url: "/meu-treino", icon: ClipboardList },
   { title: "Histórico", url: "/historico-treinos", icon: History },
 ];
 
