@@ -300,3 +300,39 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
     </div>
   );
 }
+
+type TemplateExPatch = { series?: number; repeticoes?: string; descanso_segundos?: number; observacoes?: string | null };
+
+function SortableExercise({ te, index, onUpdate, onRemove }: { te: TemplateEx; index: number; onUpdate: (patch: TemplateExPatch) => void; onRemove: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: te.id });
+  const style = { transform: CSS.Transform.toString(transform), transition: transition ?? "transform 200ms cubic-bezier(0.2, 0, 0, 1)" };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`grid grid-cols-[auto_auto_minmax(0,1fr)_auto] gap-2 items-center bg-background rounded-lg p-2 border ${isDragging ? "shadow-lg ring-2 ring-primary/40 z-10 relative opacity-90" : ""}`}
+    >
+      <button
+        type="button"
+        className="h-8 w-6 grid place-items-center text-muted-foreground cursor-grab active:cursor-grabbing touch-none"
+        title="Arraste para reordenar"
+        aria-label={`Reordenar ${te.exercises?.nome ?? "exercício"}`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <div className="h-8 w-8 grid place-items-center rounded-md bg-primary/10 text-primary"><Dumbbell className="h-4 w-4" /></div>
+      <div className="min-w-0">
+        <div className="font-medium text-sm truncate">{index + 1}. {te.exercises?.nome}</div>
+        <div className="text-xs text-muted-foreground">
+          <input type="number" defaultValue={te.series} onBlur={(e) => onUpdate({ series: Number(e.target.value) })} className="w-12 bg-transparent border rounded px-1" /> séries ·{" "}
+          <input type="text" defaultValue={te.repeticoes} onBlur={(e) => onUpdate({ repeticoes: e.target.value })} className="w-16 bg-transparent border rounded px-1" /> reps ·{" "}
+          <input type="number" defaultValue={te.descanso_segundos} onBlur={(e) => onUpdate({ descanso_segundos: Number(e.target.value) })} className="w-14 bg-transparent border rounded px-1" />s descanso
+        </div>
+      </div>
+      <Button variant="ghost" size="icon" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
+    </div>
+  );
+}
