@@ -15,6 +15,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  useWaterReminderScheduler();
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
