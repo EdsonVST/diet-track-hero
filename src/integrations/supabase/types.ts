@@ -316,6 +316,7 @@ export type Database = {
           nome: string | null
           objetivo: Database["public"]["Enums"]["goal_type"] | null
           peso: number | null
+          peso_meta: number | null
           updated_at: string
         }
         Insert: {
@@ -326,6 +327,7 @@ export type Database = {
           nome?: string | null
           objetivo?: Database["public"]["Enums"]["goal_type"] | null
           peso?: number | null
+          peso_meta?: number | null
           updated_at?: string
         }
         Update: {
@@ -336,6 +338,7 @@ export type Database = {
           nome?: string | null
           objetivo?: Database["public"]["Enums"]["goal_type"] | null
           peso?: number | null
+          peso_meta?: number | null
           updated_at?: string
         }
         Relationships: []
