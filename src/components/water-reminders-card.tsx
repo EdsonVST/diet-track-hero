@@ -10,7 +10,9 @@ import { Bell, BellOff, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import {
   DEFAULT_HORARIOS,
+  isStandalone,
   sendTestReminder,
+  syncSchedule,
   useNotificationPermission,
   type WaterReminders,
 } from "@/lib/water-reminders";
@@ -18,6 +20,8 @@ import {
 export function WaterRemindersCard() {
   const qc = useQueryClient();
   const { permission, request } = useNotificationPermission();
+  const [standalone, setStandalone] = useState(true);
+  useEffect(() => setStandalone(isStandalone()), []);
 
   const remindersQ = useQuery({
     queryKey: ["water_reminders"],
@@ -47,10 +51,12 @@ export function WaterRemindersCard() {
         .from("water_reminders")
         .upsert({ user_id: u.user.id, ativo: payload.ativo, horarios: payload.horarios });
       if (error) throw error;
+      // Cancela os agendamentos antigos e cria os novos no service worker.
+      await syncSchedule(payload);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["water_reminders"] });
-      toast.success("Lembretes salvos");
+      toast.success("Lembretes salvos e agendados");
     },
     onError: (e: Error) => toast.error(e.message),
   });
