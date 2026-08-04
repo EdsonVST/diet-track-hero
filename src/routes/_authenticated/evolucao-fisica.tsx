@@ -6,10 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, Trash2, Camera } from "lucide-react";
+import { Upload, Trash2, Camera, TrendingDown, Target } from "lucide-react";
 import { toast } from "sonner";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export const Route = createFileRoute("/_authenticated/evolucao-fisica")({
   component: EvolucaoFisicaPage,
@@ -73,7 +82,14 @@ function EvolucaoFisicaPage() {
         <p className="text-sm text-muted-foreground">Acompanhe sua evolução com fotos categorizadas</p>
       </div>
 
+      <WeightChartCard
+        photos={photos}
+        pesoAtualPerfil={profileQ.data?.peso ?? null}
+        pesoMeta={profileQ.data?.peso_meta ?? null}
+      />
+
       <UploadCard onUploaded={() => qc.invalidateQueries({ queryKey: ["progress_photos"] })} />
+
 
       {dates.length >= 2 && (
         <Card>
@@ -224,5 +240,128 @@ function UploadCard({ onUploaded }: { onUploaded: () => void }) {
         <Button onClick={handle} disabled={uploading}><Upload className="h-4 w-4 mr-1" />{uploading ? "Enviando..." : "Enviar"}</Button>
       </CardContent>
     </Card>
+  );
+}
+
+function WeightChartCard({
+  photos,
+  pesoAtualPerfil,
+  pesoMeta,
+}: {
+  photos: Photo[];
+  pesoAtualPerfil: number | null;
+  pesoMeta: number | null;
+}) {
+  // Um ponto por data (mantém o último peso informado no dia), em ordem cronológica.
+  const byDate = new Map<string, number>();
+  for (const p of [...photos].sort((a, b) => a.data.localeCompare(b.data))) {
+    if (p.peso_kg != null) byDate.set(p.data, Number(p.peso_kg));
+  }
+  const serie = Array.from(byDate.entries()).map(([data, peso]) => ({
+    data,
+    label: new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+    peso,
+  }));
+
+  const primeiro = serie[0]?.peso ?? null;
+  const atual = serie.length > 0 ? serie[serie.length - 1].peso : pesoAtualPerfil;
+  const variacao = primeiro != null && atual != null ? atual - primeiro : null;
+  const restam = atual != null && pesoMeta != null ? atual - pesoMeta : null;
+
+  let progresso: number | null = null;
+  if (primeiro != null && atual != null && pesoMeta != null && primeiro !== pesoMeta) {
+    progresso = Math.max(0, Math.min(100, ((primeiro - atual) / (primeiro - pesoMeta)) * 100));
+  }
+
+  const valores = [...serie.map((s) => s.peso), ...(pesoMeta != null ? [pesoMeta] : [])];
+  const min = valores.length ? Math.floor(Math.min(...valores) - 2) : 0;
+  const max = valores.length ? Math.ceil(Math.max(...valores) + 2) : 100;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <TrendingDown className="h-4 w-4 text-primary" />
+          Evolução do peso
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {serie.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-6 text-center">
+            Informe o peso ao enviar suas fotos para acompanhar a evolução aqui.
+          </div>
+        ) : (
+          <div className="h-56 sm:h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={serie} margin={{ top: 8, right: 12, bottom: 0, left: -16 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="currentColor" className="text-muted-foreground" />
+                <YAxis domain={[min, max]} tick={{ fontSize: 11 }} stroke="currentColor" className="text-muted-foreground" unit="kg" width={54} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", background: "hsl(var(--popover))", fontSize: 12 }}
+                  formatter={(v: number | string) => [`${v} kg`, "Peso"]}
+                />
+                {pesoMeta != null && (
+                  <ReferenceLine
+                    y={pesoMeta}
+                    stroke="hsl(var(--primary))"
+                    strokeDasharray="6 4"
+                    label={{ value: `Meta ${pesoMeta} kg`, position: "insideTopRight", fontSize: 11, fill: "hsl(var(--primary))" }}
+                  />
+                )}
+                <Line
+                  type="monotone"
+                  dataKey="peso"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2.5}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <Stat label="Peso atual" value={atual != null ? `${atual} kg` : "—"} />
+          <Stat label="Meta" value={pesoMeta != null ? `${pesoMeta} kg` : "definir no Perfil"} />
+          <Stat
+            label={restam != null && restam < 0 ? "Acima da meta" : "Restam"}
+            value={restam != null ? `${Math.abs(restam).toFixed(1)} kg` : "—"}
+          />
+          <Stat
+            label={variacao != null && variacao > 0 ? "Ganho" : "Perdido"}
+            value={variacao != null ? `${Math.abs(variacao).toFixed(1)} kg` : "—"}
+          />
+        </div>
+
+        {progresso != null && (
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1 text-muted-foreground"><Target className="h-3 w-3" />Progresso até a meta</span>
+              <span className="font-semibold">{progresso.toFixed(0)}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progresso}%` }} />
+            </div>
+          </div>
+        )}
+        {pesoMeta == null && (
+          <p className="text-[11px] text-muted-foreground">
+            Defina seu <strong>Peso meta (kg)</strong> no Perfil para ver a linha da meta e o percentual de progresso.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border p-2">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="text-sm font-bold">{value}</div>
+    </div>
   );
 }

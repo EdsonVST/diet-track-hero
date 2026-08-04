@@ -38,7 +38,7 @@ function PerfilPage() {
     },
   });
 
-  const [p, setP] = useState({ nome: "", peso: "", altura: "", idade: "", objetivo: "manutencao" });
+  const [p, setP] = useState({ nome: "", peso: "", peso_meta: "", altura: "", idade: "", objetivo: "manutencao" });
   const [g, setG] = useState({ calorias: "", proteinas: "", carboidratos: "", gorduras: "", fibras: "" });
 
   useEffect(() => {
@@ -46,6 +46,7 @@ function PerfilPage() {
       setP({
         nome: profileQ.data.nome ?? "",
         peso: profileQ.data.peso?.toString() ?? "",
+        peso_meta: profileQ.data.peso_meta?.toString() ?? "",
         altura: profileQ.data.altura?.toString() ?? "",
         idade: profileQ.data.idade?.toString() ?? "",
         objetivo: profileQ.data.objetivo ?? "manutencao",
@@ -73,6 +74,7 @@ function PerfilPage() {
       id: u.user.id,
       nome: p.nome.trim(),
       peso: p.peso ? Number(p.peso) : null,
+      peso_meta: p.peso_meta ? Number(p.peso_meta) : null,
       altura: p.altura ? Number(p.altura) : null,
       idade: p.idade ? Number(p.idade) : null,
       objetivo: p.objetivo as any,
@@ -110,10 +112,14 @@ function PerfilPage() {
             <Label className="text-xs">Nome</Label>
             <Input value={p.nome} onChange={(e) => setP({ ...p, nome: e.target.value })} />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Peso (kg)</Label>
               <Input type="number" step="any" value={p.peso} onChange={(e) => setP({ ...p, peso: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Peso meta (kg)</Label>
+              <Input type="number" step="any" value={p.peso_meta} onChange={(e) => setP({ ...p, peso_meta: e.target.value })} placeholder="Ex: 80" />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Altura (cm)</Label>
@@ -124,6 +130,7 @@ function PerfilPage() {
               <Input type="number" value={p.idade} onChange={(e) => setP({ ...p, idade: e.target.value })} />
             </div>
           </div>
+
           <div className="space-y-1">
             <Label className="text-xs">Objetivo</Label>
             <Select value={p.objetivo} onValueChange={(v) => setP({ ...p, objetivo: v })}>

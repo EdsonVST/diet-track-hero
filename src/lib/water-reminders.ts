@@ -33,9 +33,46 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 export async function registerReminderWorker(): Promise<ServiceWorkerRegistration | null> {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return null;
   try {
-    return await navigator.serviceWorker.register(SW_URL, { scope: "/" });
+    const reg =
+      (await navigator.serviceWorker.getRegistration(SW_URL)) ??
+      (await navigator.serviceWorker.register(SW_URL, { scope: "/" }));
+    await navigator.serviceWorker.ready;
+    return reg;
   } catch {
     return null;
+  }
+}
+
+async function activeWorker(): Promise<ServiceWorker | null> {
+  const reg = await registerReminderWorker();
+  return reg?.active ?? reg?.waiting ?? reg?.installing ?? null;
+}
+
+/** Envia os horários para o service worker, que cancela os antigos e reagenda tudo. */
+export async function syncSchedule(config: { ativo: boolean; horarios: string[] }) {
+  const worker = await activeWorker();
+  worker?.postMessage({ type: "set-schedule", ativo: config.ativo, horarios: config.horarios });
+  if (config.ativo) await enablePeriodicSync();
+}
+
+/** Pede ao service worker para verificar horários vencidos (quando o app volta ao foco). */
+export async function checkScheduleNow() {
+  const worker = await activeWorker();
+  worker?.postMessage({ type: "check-now" });
+}
+
+/** Periodic Background Sync mantém os lembretes vivos com o app fechado (quando suportado). */
+async function enablePeriodicSync() {
+  try {
+    const reg = (await registerReminderWorker()) as
+      | (ServiceWorkerRegistration & { periodicSync?: { register: (tag: string, o: { minInterval: number }) => Promise<void> } })
+      | null;
+    if (!reg?.periodicSync) return;
+    const status = await navigator.permissions?.query({ name: "periodic-background-sync" as PermissionName }).catch(() => null);
+    if (status && status.state !== "granted") return;
+    await reg.periodicSync.register("water-reminders", { minInterval: 15 * 60 * 1000 });
+  } catch {
+    /* navegador sem suporte — o fallback em app aberto continua funcionando */
   }
 }
 
@@ -43,12 +80,11 @@ async function showReminder() {
   if (notificationPermission() !== "granted") return;
   const options: NotificationOptions = {
     body: NOTIF_BODY,
-    icon: "/favicon.ico",
-    badge: "/favicon.ico",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
     tag: "water-reminder",
-    requireInteraction: false,
   };
-  const reg = (await navigator.serviceWorker?.getRegistration(SW_URL)) ?? (await registerReminderWorker());
+  const reg = await registerReminderWorker();
   if (reg) {
     await reg.showNotification(NOTIF_TITLE, options);
   } else {
@@ -81,7 +117,7 @@ function alreadyFired(horario: string) {
   return (readFired()[todayKey()] ?? []).includes(horario);
 }
 
-/** Agenda os lembretes enquanto o app estiver aberto (aba ativa ou em segundo plano). */
+/** Garante que o service worker esteja registrado e com os horários atuais agendados. */
 export function useWaterReminderScheduler() {
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const config = useRef<WaterReminders | null>(null);
@@ -91,11 +127,14 @@ export function useWaterReminderScheduler() {
 
     const load = async () => {
       const { data } = await supabase.from("water_reminders").select("*").maybeSingle();
-      if (!cancelled) config.current = (data as WaterReminders | null) ?? null;
+      if (cancelled) return;
+      const cfg = (data as WaterReminders | null) ?? null;
+      config.current = cfg;
+      if (cfg) await syncSchedule({ ativo: cfg.ativo, horarios: cfg.horarios ?? [] });
+      await checkScheduleNow();
     };
 
-    void load();
-    void registerReminderWorker();
+    void registerReminderWorker().then(() => load());
 
     const tick = () => {
       const cfg = config.current;
@@ -113,11 +152,13 @@ export function useWaterReminderScheduler() {
     timer.current = setInterval(tick, 20_000);
     const onFocus = () => void load();
     window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
 
     return () => {
       cancelled = true;
       if (timer.current) clearInterval(timer.current);
       window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
     };
   }, []);
 }
@@ -137,4 +178,13 @@ export function useNotificationPermission() {
 
 export async function sendTestReminder() {
   await showReminder();
+}
+
+/** true quando o app está rodando instalado (standalone), onde as notificações são mais confiáveis. */
+export function isStandalone() {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia?.("(display-mode: standalone)").matches ||
+    (window.navigator as unknown as { standalone?: boolean }).standalone === true
+  );
 }

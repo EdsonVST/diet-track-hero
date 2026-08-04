@@ -165,17 +165,20 @@ function TemplateDialog({ tpl, children, onSaved }: { tpl?: Template; children: 
 
 function TemplateExercises({ templateId, exercises, allTemplates }: { templateId: string; exercises: Array<{ id: string; nome: string; grupo_muscular: string | null }>; allTemplates: Template[] }) {
   const qc = useQueryClient();
+  const queryKey = ["template_exercises", templateId] as const;
   const list = useQuery({
-    queryKey: ["template_exercises", templateId],
+    queryKey,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("template_exercises")
         .select("*,exercises(id,nome,grupo_muscular)")
         .eq("template_id", templateId)
-        .order("ordem");
+        .order("ordem", { ascending: true })
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as TemplateEx[];
     },
+    staleTime: 0,
   });
 
   const add = useMutation({
@@ -184,7 +187,7 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
       const { error } = await supabase.from("template_exercises").insert({ template_id: templateId, ordem, ...payload });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
   });
 
   const update = useMutation({
@@ -192,24 +195,31 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
       const { error } = await supabase.from("template_exercises").update(patch).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
   });
 
   const remove = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("template_exercises").delete().eq("id", id); if (error) throw error; },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
   });
 
   const persistOrder = useMutation({
     mutationFn: async (items: TemplateEx[]) => {
-      await Promise.all(
-        items.map((it, idx) =>
-          it.ordem === idx ? null : supabase.from("template_exercises").update({ ordem: idx }).eq("id", it.id),
-        ),
-      );
+      // Grava sequencialmente e verifica erros de cada update (evita falha silenciosa).
+      for (let idx = 0; idx < items.length; idx++) {
+        const it = items[idx];
+        const { error } = await supabase
+          .from("template_exercises")
+          .update({ ordem: idx })
+          .eq("id", it.id)
+          .eq("template_id", templateId);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }),
-    onError: (e: Error) => { toast.error(e.message); qc.invalidateQueries({ queryKey: ["template_exercises", templateId] }); },
+    onError: (e: Error) => {
+      toast.error(`Não foi possível salvar a ordem: ${e.message}`);
+      void qc.invalidateQueries({ queryKey });
+    },
   });
 
   const sensors = useSensors(
@@ -221,12 +231,13 @@ function TemplateExercises({ templateId, exercises, allTemplates }: { templateId
   const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const items = list.data ?? [];
+    const items = qc.getQueryData<TemplateEx[]>(queryKey) ?? list.data ?? [];
     const from = items.findIndex((i) => i.id === active.id);
     const to = items.findIndex((i) => i.id === over.id);
     if (from < 0 || to < 0) return;
     const next = arrayMove(items, from, to).map((it, idx) => ({ ...it, ordem: idx }));
-    qc.setQueryData(["template_exercises", templateId], next);
+    // Atualiza a UI imediatamente e só persiste; nenhum refetch sobrescreve a nova ordem.
+    qc.setQueryData(queryKey, next);
     persistOrder.mutate(next);
   };
 
