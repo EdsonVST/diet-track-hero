@@ -112,10 +112,14 @@ function PerfilPage() {
             <Label className="text-xs">Nome</Label>
             <Input value={p.nome} onChange={(e) => setP({ ...p, nome: e.target.value })} />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Peso (kg)</Label>
               <Input type="number" step="any" value={p.peso} onChange={(e) => setP({ ...p, peso: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Peso meta (kg)</Label>
+              <Input type="number" step="any" value={p.peso_meta} onChange={(e) => setP({ ...p, peso_meta: e.target.value })} placeholder="Ex: 80" />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Altura (cm)</Label>
@@ -126,6 +130,7 @@ function PerfilPage() {
               <Input type="number" value={p.idade} onChange={(e) => setP({ ...p, idade: e.target.value })} />
             </div>
           </div>
+
           <div className="space-y-1">
             <Label className="text-xs">Objetivo</Label>
             <Select value={p.objetivo} onValueChange={(v) => setP({ ...p, objetivo: v })}>
