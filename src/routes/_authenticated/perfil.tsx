@@ -74,6 +74,7 @@ function PerfilPage() {
       id: u.user.id,
       nome: p.nome.trim(),
       peso: p.peso ? Number(p.peso) : null,
+      peso_meta: p.peso_meta ? Number(p.peso_meta) : null,
       altura: p.altura ? Number(p.altura) : null,
       idade: p.idade ? Number(p.idade) : null,
       objetivo: p.objetivo as any,
