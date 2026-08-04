@@ -82,7 +82,14 @@ function EvolucaoFisicaPage() {
         <p className="text-sm text-muted-foreground">Acompanhe sua evolução com fotos categorizadas</p>
       </div>
 
+      <WeightChartCard
+        photos={photos}
+        pesoAtualPerfil={profileQ.data?.peso ?? null}
+        pesoMeta={profileQ.data?.peso_meta ?? null}
+      />
+
       <UploadCard onUploaded={() => qc.invalidateQueries({ queryKey: ["progress_photos"] })} />
+
 
       {dates.length >= 2 && (
         <Card>
