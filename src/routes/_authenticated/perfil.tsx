@@ -38,7 +38,7 @@ function PerfilPage() {
     },
   });
 
-  const [p, setP] = useState({ nome: "", peso: "", altura: "", idade: "", objetivo: "manutencao" });
+  const [p, setP] = useState({ nome: "", peso: "", peso_meta: "", altura: "", idade: "", objetivo: "manutencao" });
   const [g, setG] = useState({ calorias: "", proteinas: "", carboidratos: "", gorduras: "", fibras: "" });
 
   useEffect(() => {
@@ -46,6 +46,7 @@ function PerfilPage() {
       setP({
         nome: profileQ.data.nome ?? "",
         peso: profileQ.data.peso?.toString() ?? "",
+        peso_meta: profileQ.data.peso_meta?.toString() ?? "",
         altura: profileQ.data.altura?.toString() ?? "",
         idade: profileQ.data.idade?.toString() ?? "",
         objetivo: profileQ.data.objetivo ?? "manutencao",
