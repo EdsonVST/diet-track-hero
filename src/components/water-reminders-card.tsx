@@ -124,9 +124,22 @@ export function WaterRemindersCard() {
         {permission === "denied" && (
           <div className="flex gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
             <TriangleAlert className="h-4 w-4 shrink-0 text-amber-600" />
-            As notificações estão bloqueadas nas configurações do aparelho/navegador. Enquanto isso, os lembretes não poderão ser enviados.
+            <span>
+              As notificações estão <strong>bloqueadas</strong> neste aparelho. Para ativar: abra as configurações do navegador →
+              <em> Configurações do site / Notificações</em> → permita para este site. No Android também verifique
+              <em> Configurações → Apps → NutriControl → Notificações</em>. No iPhone, adicione o app à Tela de Início e permita
+              notificações quando solicitado.
+            </span>
           </div>
         )}
+        {ativo && permission === "granted" && !standalone && (
+          <div className="flex gap-2 rounded-lg border border-sky-500/40 bg-sky-500/10 p-3 text-xs">
+            <TriangleAlert className="h-4 w-4 shrink-0 text-sky-600" />
+            Para receber lembretes com o app fechado ou com a tela bloqueada, instale o NutriControl na tela inicial
+            (menu do navegador → “Adicionar à tela de início” / “Instalar app”).
+          </div>
+        )}
+
 
         <div className="space-y-2">
           <Label className="text-xs">Horários</Label>
