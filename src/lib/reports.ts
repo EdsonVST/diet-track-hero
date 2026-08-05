@@ -62,18 +62,65 @@ export function totalsByMeal(rows: ReportRow[]) {
   return Array.from(map.values());
 }
 
+/** Média por refeição considerando somente os dias em que a refeição foi registrada. */
+export function averagesByMeal(rows: ReportRow[]) {
+  const map = new Map<string, { tipo: string; itens: number; dias: Set<string>; totals: ComputedNutrients }>();
+  for (const r of rows) {
+    const prev = map.get(r.refeicao) ?? { tipo: r.refeicao, itens: 0, dias: new Set<string>(), totals: emptyTotals() };
+    prev.itens += 1;
+    prev.dias.add(r.data);
+    prev.totals = sumTotals(prev.totals, r.nut);
+    map.set(r.refeicao, prev);
+  }
+  const round1 = (n: number) => Math.round(n * 10) / 10;
+  return Array.from(map.values())
+    .map((m) => {
+      const d = Math.max(1, m.dias.size);
+      return {
+        tipo: m.tipo,
+        dias: m.dias.size,
+        itens: m.itens,
+        itensPorDia: round1(m.itens / d),
+        calorias: round1(m.totals.calorias / d),
+        proteina: round1(m.totals.proteina / d),
+        carboidrato: round1(m.totals.carboidrato / d),
+        gordura: round1(m.totals.gordura / d),
+        fibra: round1(m.totals.fibra / d),
+      };
+    })
+    .sort((a, b) => b.calorias - a.calorias);
+}
+
 export function totalsOverall(rows: ReportRow[]): ComputedNutrients {
   return rows.reduce((acc, r) => sumTotals(acc, r.nut), emptyTotals());
 }
 
+/** Ranking de alimentos com média diária consumida (dias do período com algum registro). */
 export function topFoods(rows: ReportRow[], n = 10) {
-  const map = new Map<string, { nome: string; quantidade: number; vezes: number; unidade: string }>();
+  const diasComRegistro = new Set(rows.map((r) => r.data)).size || 1;
+  const map = new Map<string, { nome: string; quantidade: number; vezes: number; unidade: string; kcal: number }>();
   for (const r of rows) {
-    const prev = map.get(r.alimento) ?? { nome: r.alimento, quantidade: 0, vezes: 0, unidade: r.unidade };
-    map.set(r.alimento, { ...prev, quantidade: prev.quantidade + r.quantidade, vezes: prev.vezes + 1 });
+    const prev = map.get(r.alimento) ?? { nome: r.alimento, quantidade: 0, vezes: 0, unidade: r.unidade, kcal: 0 };
+    map.set(r.alimento, {
+      ...prev,
+      quantidade: prev.quantidade + r.quantidade,
+      vezes: prev.vezes + 1,
+      kcal: prev.kcal + r.nut.calorias,
+    });
   }
-  return Array.from(map.values()).sort((a, b) => b.vezes - a.vezes).slice(0, n);
+  const all = Array.from(map.values());
+  const kcalTotal = all.reduce((s, f) => s + f.kcal, 0) || 1;
+  return all
+    .map((f) => ({
+      ...f,
+      mediaDiaria: Math.round((f.quantidade / diasComRegistro) * 10) / 10,
+      kcalDia: Math.round(f.kcal / diasComRegistro),
+      participacao: Math.round((f.kcal / kcalTotal) * 1000) / 10,
+    }))
+    .sort((a, b) => b.kcalDia - a.kcalDia || b.vezes - a.vezes)
+    .slice(0, n);
 }
+
 
 const EXPORT_HEADERS = [
   "Data","Refeição","Alimento","Quantidade","Unidade","Calorias (kcal)","Proteínas (g)","Carboidratos (g)","Gorduras (g)","Fibras (g)",
