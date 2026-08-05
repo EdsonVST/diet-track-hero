@@ -10,15 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, Trash2, Camera, TrendingDown, Target } from "lucide-react";
 import { toast } from "sonner";
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+
 
 export const Route = createFileRoute("/_authenticated/evolucao-fisica")({
   component: EvolucaoFisicaPage,
