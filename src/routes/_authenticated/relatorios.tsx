@@ -65,11 +65,55 @@ function RelatoriosPage() {
     },
   });
 
+  const waterQ = useQuery({
+    queryKey: ["report-water", range.from, range.to],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("water_logs")
+        .select("data,quantidade_ml")
+        .gte("data", range.from)
+        .lte("data", range.to);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const rows = useMemo(() => buildRows(mealsQ.data ?? []), [mealsQ.data]);
   const byDay = useMemo(() => totalsByDay(rows), [rows]);
-  const byMeal = useMemo(() => totalsByMeal(rows), [rows]);
+  const byMeal = useMemo(() => averagesByMeal(rows), [rows]);
   const top = useMemo(() => topFoods(rows), [rows]);
   const overall = useMemo(() => totalsOverall(rows), [rows]);
+  const dias = byDay.length || 1;
+
+  const series = useMemo(() => {
+    const build = (key: "calorias" | "proteina" | "carboidrato" | "gordura" | "fibra") =>
+      byDay.map((d: any, i: number) => ({
+        label: fmtDayLabel(d.data),
+        value: Number(d[key] ?? 0),
+        __dateLong: new Date(`${d.data}T00:00:00`).toLocaleDateString("pt-BR", { dateStyle: "long" }),
+        __delta: i === 0 ? null : Math.round((Number(d[key]) - Number((byDay[i - 1] as any)[key])) * 10) / 10,
+      }));
+    return {
+      calorias: build("calorias"),
+      proteina: build("proteina"),
+      carboidrato: build("carboidrato"),
+      gordura: build("gordura"),
+      fibra: build("fibra"),
+    };
+  }, [byDay]);
+
+  const waterSeries = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const w of waterQ.data ?? []) map.set(w.data, (map.get(w.data) ?? 0) + Number(w.quantidade_ml));
+    const arr = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+    return arr.map(([d, ml], i) => ({
+      label: fmtDayLabel(d),
+      value: ml,
+      __dateLong: new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR", { dateStyle: "long" }),
+      __delta: i === 0 ? null : ml - arr[i - 1][1],
+    }));
+  }, [waterQ.data]);
+
 
   const meta = {
     nome: profileQ.data?.nome ?? "Usuário",
