@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { FileDown, FileSpreadsheet, FileText } from "lucide-react";
-import { buildRows, totalsByDay, totalsByMeal, totalsOverall, topFoods, exportCSV, exportXLSX, exportPDF, type MealRow } from "@/lib/reports";
+import { FileDown, FileSpreadsheet, FileText, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendAreaChart, HorizontalRankBar, CHART_COLORS, fmtDayLabel } from "@/components/charts";
+import { buildRows, totalsByDay, averagesByMeal, totalsOverall, topFoods, exportCSV, exportXLSX, exportPDF, type MealRow } from "@/lib/reports";
+
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   component: RelatoriosPage,
@@ -64,11 +65,55 @@ function RelatoriosPage() {
     },
   });
 
+  const waterQ = useQuery({
+    queryKey: ["report-water", range.from, range.to],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("water_logs")
+        .select("data,quantidade_ml")
+        .gte("data", range.from)
+        .lte("data", range.to);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const rows = useMemo(() => buildRows(mealsQ.data ?? []), [mealsQ.data]);
   const byDay = useMemo(() => totalsByDay(rows), [rows]);
-  const byMeal = useMemo(() => totalsByMeal(rows), [rows]);
+  const byMeal = useMemo(() => averagesByMeal(rows), [rows]);
   const top = useMemo(() => topFoods(rows), [rows]);
   const overall = useMemo(() => totalsOverall(rows), [rows]);
+  const dias = byDay.length || 1;
+
+  const series = useMemo(() => {
+    const build = (key: "calorias" | "proteina" | "carboidrato" | "gordura" | "fibra") =>
+      byDay.map((d: any, i: number) => ({
+        label: fmtDayLabel(d.data),
+        value: Number(d[key] ?? 0),
+        __dateLong: new Date(`${d.data}T00:00:00`).toLocaleDateString("pt-BR", { dateStyle: "long" }),
+        __delta: i === 0 ? null : Math.round((Number(d[key]) - Number((byDay[i - 1] as any)[key])) * 10) / 10,
+      }));
+    return {
+      calorias: build("calorias"),
+      proteina: build("proteina"),
+      carboidrato: build("carboidrato"),
+      gordura: build("gordura"),
+      fibra: build("fibra"),
+    };
+  }, [byDay]);
+
+  const waterSeries = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const w of waterQ.data ?? []) map.set(w.data, (map.get(w.data) ?? 0) + Number(w.quantidade_ml));
+    const arr = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+    return arr.map(([d, ml], i) => ({
+      label: fmtDayLabel(d),
+      value: ml,
+      __dateLong: new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR", { dateStyle: "long" }),
+      __delta: i === 0 ? null : ml - arr[i - 1][1],
+    }));
+  }, [waterQ.data]);
+
 
   const meta = {
     nome: profileQ.data?.nome ?? "Usuário",
@@ -116,17 +161,39 @@ function RelatoriosPage() {
 
       <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
         {[
-          { l: "Calorias", v: overall.calorias, u: "kcal" },
-          { l: "Proteínas", v: overall.proteina, u: "g" },
-          { l: "Carboidratos", v: overall.carboidrato, u: "g" },
-          { l: "Gorduras", v: overall.gordura, u: "g" },
-          { l: "Fibras", v: overall.fibra, u: "g" },
-        ].map((s) => (
-          <Card key={s.l}><CardContent className="p-4">
-            <div className="text-xs text-muted-foreground">{s.l}</div>
-            <div className="text-xl font-bold mt-1">{s.v} <span className="text-xs font-medium text-muted-foreground">{s.u}</span></div>
-          </CardContent></Card>
-        ))}
+          { l: "Calorias", v: overall.calorias, u: "kcal", k: "calorias" },
+          { l: "Proteínas", v: overall.proteina, u: "g", k: "proteina" },
+          { l: "Carboidratos", v: overall.carboidrato, u: "g", k: "carboidrato" },
+          { l: "Gorduras", v: overall.gordura, u: "g", k: "gordura" },
+          { l: "Fibras", v: overall.fibra, u: "g", k: "fibra" },
+        ].map((s) => {
+          const media = Math.round((s.v / dias) * 10) / 10;
+          const serie = (series as any)[s.k] as Array<{ value: number }>;
+          const trend =
+            serie.length >= 2 ? serie[serie.length - 1].value - serie[serie.length - 2].value : 0;
+          const Icon = trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus;
+          return (
+            <Card key={s.l} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs text-muted-foreground truncate">{s.l}</div>
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: CHART_COLORS[s.k] }}
+                  />
+                </div>
+                <div className="text-xl font-bold mt-1 tabular-nums">
+                  {media.toLocaleString("pt-BR")}{" "}
+                  <span className="text-xs font-medium text-muted-foreground">{s.u}/dia</span>
+                </div>
+                <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Icon className="h-3 w-3 shrink-0" />
+                  <span className="truncate">total {s.v.toLocaleString("pt-BR")} {s.u}</span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <Tabs defaultValue="graficos">
@@ -137,53 +204,151 @@ function RelatoriosPage() {
         </TabsList>
 
         <TabsContent value="graficos" className="space-y-4">
-          {(["calorias","proteina","carboidrato","gordura","fibra"] as const).map((k) => (
-            <Card key={k}>
-              <CardHeader><CardTitle className="text-base capitalize">Evolução — {k}</CardTitle></CardHeader>
-              <CardContent className="h-56">
-                <ResponsiveContainer>
-                  <LineChart data={byDay}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="data" fontSize={11} />
-                    <YAxis fontSize={11} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey={k} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {([
+              ["calorias", "Calorias por dia", "kcal"],
+              ["proteina", "Proteínas por dia", "g"],
+              ["carboidrato", "Carboidratos por dia", "g"],
+              ["gordura", "Gorduras por dia", "g"],
+              ["fibra", "Fibras por dia", "g"],
+            ] as const).map(([k, titulo, unidade]) => {
+              const serie = (series as any)[k] as Array<{ value: number }>;
+              const media = serie.length ? serie.reduce((s, d) => s + d.value, 0) / serie.length : 0;
+              return (
+                <Card key={k} className="overflow-hidden">
+                  <CardHeader className="pb-1">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                      <CardTitle className="truncate text-base">{titulo}</CardTitle>
+                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold tabular-nums">
+                        média {Math.round(media * 10) / 10} {unidade}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="h-56 sm:h-64 px-2">
+                    {serie.length === 0 ? (
+                      <EmptyChart />
+                    ) : (
+                      <TrendAreaChart data={serie as any} color={CHART_COLORS[k]} unidade={unidade} />
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-1">
+                <CardTitle className="text-base">Água consumida por dia</CardTitle>
+              </CardHeader>
+              <CardContent className="h-56 sm:h-64 px-2">
+                {waterSeries.length === 0 ? <EmptyChart /> : (
+                  <TrendAreaChart data={waterSeries as any} color={CHART_COLORS.agua} unidade="ml" />
+                )}
               </CardContent>
             </Card>
-          ))}
+          </div>
         </TabsContent>
 
-        <TabsContent value="refeicoes">
-          <Card><CardContent className="p-0">
-            <div className="grid grid-cols-6 px-4 py-2 text-xs font-medium text-muted-foreground border-b">
-              <div className="col-span-2">Refeição</div><div>Itens</div><div>Kcal</div><div>P/C/G</div><div>Fibra</div>
-            </div>
+        <TabsContent value="refeicoes" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-1">
+              <CardTitle className="text-base">Média por refeição</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Considera apenas os dias em que cada refeição foi registrada.
+              </p>
+            </CardHeader>
+            <CardContent className="h-64 px-2">
+              {byMeal.length === 0 ? <EmptyChart /> : (
+                <HorizontalRankBar
+                  unidade="kcal/refeição"
+                  data={byMeal.map((m) => ({
+                    nome: m.tipo,
+                    value: m.calorias,
+                    extra: `${m.proteina}g P · ${m.carboidrato}g C · ${m.gordura}g G · ${m.dias} dia(s)`,
+                  }))}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-3 sm:grid-cols-2">
             {byMeal.map((m) => (
-              <div key={m.tipo} className="grid grid-cols-6 px-4 py-3 text-sm border-b last:border-0">
-                <div className="col-span-2 font-medium">{m.tipo}</div>
-                <div>{m.count}</div>
-                <div>{m.totals.calorias}</div>
-                <div className="text-xs">{m.totals.proteina}/{m.totals.carboidrato}/{m.totals.gordura}g</div>
-                <div>{m.totals.fibra}g</div>
-              </div>
+              <Card key={m.tipo}>
+                <CardContent className="p-4 space-y-3">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                    <div className="truncate font-semibold">{m.tipo}</div>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{m.dias} dia(s) registrados</span>
+                  </div>
+                  <div className="text-2xl font-black tabular-nums">
+                    {m.calorias.toLocaleString("pt-BR")}
+                    <span className="ml-1 text-xs font-medium text-muted-foreground">kcal em média</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    {[
+                      ["Proteína", m.proteina, "proteina"],
+                      ["Carbo", m.carboidrato, "carboidrato"],
+                      ["Gordura", m.gordura, "gordura"],
+                      ["Fibra", m.fibra, "fibra"],
+                    ].map(([l, v, key]) => (
+                      <div key={l as string} className="rounded-lg border p-2">
+                        <div className="text-[10px] text-muted-foreground">{l as string}</div>
+                        <div
+                          className="text-sm font-bold tabular-nums"
+                          style={{ color: CHART_COLORS[key as string] }}
+                        >
+                          {v as number}g
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {m.itensPorDia} item(ns) por refeição em média
+                  </div>
+                </CardContent>
+              </Card>
             ))}
-            {byMeal.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">Sem dados no período</div>}
-          </CardContent></Card>
+          </div>
+          {byMeal.length === 0 && (
+            <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Sem dados no período</CardContent></Card>
+          )}
         </TabsContent>
 
-        <TabsContent value="alimentos">
+        <TabsContent value="alimentos" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-1">
+              <CardTitle className="text-base">Alimentos predominantes</CardTitle>
+              <p className="text-xs text-muted-foreground">Média diária de calorias vindas de cada alimento</p>
+            </CardHeader>
+            <CardContent className="px-2">
+              {top.length === 0 ? <div className="h-40"><EmptyChart /></div> : (
+                <HorizontalRankBar
+                  unidade="kcal/dia"
+                  data={top.map((t) => ({
+                    nome: t.nome,
+                    value: t.kcalDia,
+                    extra: `${t.mediaDiaria} ${t.unidade}/dia · ${t.participacao}% das calorias`,
+                  }))}
+                />
+              )}
+            </CardContent>
+          </Card>
+
           <Card><CardContent className="p-0">
             <div className="grid grid-cols-[1fr_auto_auto] px-4 py-2 text-xs font-medium text-muted-foreground border-b gap-4">
-              <div>Alimento</div><div>Qtd total</div><div>Vezes</div>
+              <div>Alimento</div><div className="text-right">Média diária</div><div className="text-right">Participação</div>
             </div>
             {top.map((t, i) => (
-              <div key={t.nome} className="grid grid-cols-[1fr_auto_auto] px-4 py-3 text-sm border-b last:border-0 gap-4">
-                <div className="font-medium">{i+1}. {t.nome}</div>
-                <div>{t.quantidade.toFixed(1)} {t.unidade}</div>
-                <div>{t.vezes}x</div>
+              <div key={t.nome} className="px-4 py-3 border-b last:border-0">
+                <div className="grid grid-cols-[1fr_auto_auto] gap-4 text-sm">
+                  <div className="min-w-0 truncate font-medium">{i + 1}. {t.nome}</div>
+                  <div className="text-right tabular-nums">{t.mediaDiaria} {t.unidade}/dia</div>
+                  <div className="w-14 text-right tabular-nums text-muted-foreground">{t.participacao}%</div>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${Math.min(100, t.participacao)}%`, background: "var(--primary)" }}
+                  />
+                </div>
               </div>
             ))}
             {top.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">Sem dados no período</div>}
@@ -193,3 +358,12 @@ function RelatoriosPage() {
     </div>
   );
 }
+
+function EmptyChart() {
+  return (
+    <div className="grid h-full place-items-center text-sm text-muted-foreground">
+      Sem dados suficientes no período
+    </div>
+  );
+}
+

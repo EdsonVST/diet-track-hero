@@ -10,15 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, Trash2, Camera, TrendingDown, Target } from "lucide-react";
 import { toast } from "sonner";
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+
 
 export const Route = createFileRoute("/_authenticated/evolucao-fisica")({
   component: EvolucaoFisicaPage,
@@ -257,10 +259,12 @@ function WeightChartCard({
   for (const p of [...photos].sort((a, b) => a.data.localeCompare(b.data))) {
     if (p.peso_kg != null) byDate.set(p.data, Number(p.peso_kg));
   }
-  const serie = Array.from(byDate.entries()).map(([data, peso]) => ({
+  const serie = Array.from(byDate.entries()).map(([data, peso], i, arr) => ({
     data,
     label: new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+    dataLonga: new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR", { dateStyle: "long" }),
     peso,
+    delta: i === 0 ? null : Math.round((peso - arr[i - 1][1]) * 10) / 10,
   }));
 
   const primeiro = serie[0]?.peso ?? null;
@@ -273,52 +277,128 @@ function WeightChartCard({
     progresso = Math.max(0, Math.min(100, ((primeiro - atual) / (primeiro - pesoMeta)) * 100));
   }
 
-  const valores = [...serie.map((s) => s.peso), ...(pesoMeta != null ? [pesoMeta] : [])];
-  const min = valores.length ? Math.floor(Math.min(...valores) - 2) : 0;
-  const max = valores.length ? Math.ceil(Math.max(...valores) + 2) : 100;
+  // Escala: 20–140 kg por padrão; expande com margem se algum valor passar de 140.
+  const valores = [
+    ...serie.map((s) => s.peso),
+    ...(pesoMeta != null ? [pesoMeta] : []),
+    ...(pesoAtualPerfil != null ? [pesoAtualPerfil] : []),
+  ];
+  const maiorValor = valores.length ? Math.max(...valores) : 0;
+  const min = 20;
+  const max = maiorValor > 140 ? Math.ceil((maiorValor + 10) / 10) * 10 : 140;
+
+  const ultimo = serie[serie.length - 1];
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <TrendingDown className="h-4 w-4 text-primary" />
-          Evolução do peso
-        </CardTitle>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <CardTitle className="truncate text-base flex items-center gap-2">
+            <TrendingDown className="h-4 w-4 shrink-0 text-primary" />
+            Evolução do peso
+          </CardTitle>
+          {atual != null && (
+            <div className="shrink-0 text-right">
+              <div className="text-2xl font-black leading-none tabular-nums">{atual.toLocaleString("pt-BR")} <span className="text-xs font-medium text-muted-foreground">kg</span></div>
+              {variacao != null && variacao !== 0 && (
+                <div className={`text-[11px] font-semibold ${variacao < 0 ? "text-primary" : "text-destructive"}`}>
+                  {variacao > 0 ? "+" : ""}{variacao.toFixed(1)} kg no período
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {serie.length === 0 ? (
-          <div className="text-sm text-muted-foreground py-6 text-center">
+          <div className="text-sm text-muted-foreground py-10 text-center">
             Informe o peso ao enviar suas fotos para acompanhar a evolução aqui.
           </div>
         ) : (
-          <div className="h-56 sm:h-72 w-full">
+          <div className="h-64 sm:h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={serie} margin={{ top: 8, right: 12, bottom: 0, left: -16 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="currentColor" className="text-muted-foreground" />
-                <YAxis domain={[min, max]} tick={{ fontSize: 11 }} stroke="currentColor" className="text-muted-foreground" unit="kg" width={54} />
+              <AreaChart data={serie} margin={{ top: 16, right: 18, bottom: 0, left: -10 }}>
+                <defs>
+                  <linearGradient id="pesoFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="var(--border)" strokeDasharray="4 6" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                  axisLine={false}
+                  tickLine={false}
+                  minTickGap={16}
+                />
+                <YAxis
+                  domain={[min, max]}
+                  ticks={Array.from({ length: Math.floor((max - min) / 20) + 1 }, (_, i) => min + i * 20)}
+                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={46}
+                  unit=" kg"
+                />
                 <Tooltip
-                  contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", background: "hsl(var(--popover))", fontSize: 12 }}
-                  formatter={(v: number | string) => [`${v} kg`, "Peso"]}
+                  cursor={{ stroke: "var(--primary)", strokeDasharray: "3 3" }}
+                  content={({ active, payload }: any) => {
+                    if (!active || !payload?.length) return null;
+                    const p = payload[0].payload;
+                    return (
+                      <div className="rounded-xl border bg-popover/95 px-3 py-2 shadow-lg backdrop-blur">
+                        <div className="text-[11px] font-medium text-muted-foreground">{p.dataLonga}</div>
+                        <div className="text-base font-bold tabular-nums">
+                          {Number(p.peso).toLocaleString("pt-BR", { minimumFractionDigits: 1 })} kg
+                        </div>
+                        <div className={`text-[11px] font-semibold ${p.delta == null ? "text-muted-foreground" : p.delta < 0 ? "text-primary" : p.delta > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                          {p.delta == null
+                            ? "Primeiro registro"
+                            : `${p.delta > 0 ? "+" : ""}${p.delta.toFixed(1)} kg desde o último registro`}
+                        </div>
+                      </div>
+                    );
+                  }}
                 />
                 {pesoMeta != null && (
                   <ReferenceLine
                     y={pesoMeta}
-                    stroke="hsl(var(--primary))"
+                    stroke="var(--chart-4)"
                     strokeDasharray="6 4"
-                    label={{ value: `Meta ${pesoMeta} kg`, position: "insideTopRight", fontSize: 11, fill: "hsl(var(--primary))" }}
+                    strokeWidth={1.5}
+                    label={{
+                      value: `Meta ${pesoMeta} kg`,
+                      position: "right",
+                      fontSize: 11,
+                      fill: "var(--chart-4)",
+                    }}
                   />
                 )}
-                <Line
+                <Area
                   type="monotone"
                   dataKey="peso"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2.5}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
+                  stroke="var(--primary)"
+                  strokeWidth={3}
+                  fill="url(#pesoFill)"
+                  dot={{ r: 3, fill: "var(--card)", stroke: "var(--primary)", strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: "var(--primary)", stroke: "var(--card)", strokeWidth: 2 }}
+                  animationDuration={1000}
+                  animationEasing="ease-out"
                   connectNulls
                 />
-              </LineChart>
+                {ultimo && (
+                  <ReferenceDot
+                    x={ultimo.label}
+                    y={ultimo.peso}
+                    r={7}
+                    fill="var(--primary)"
+                    stroke="var(--card)"
+                    strokeWidth={3}
+                    isFront
+                  />
+                )}
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         )}
@@ -343,7 +423,7 @@ function WeightChartCard({
               <span className="font-semibold">{progresso.toFixed(0)}%</span>
             </div>
             <div className="h-2 rounded-full bg-muted overflow-hidden">
-              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progresso}%` }} />
+              <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${progresso}%` }} />
             </div>
           </div>
         )}
@@ -356,6 +436,7 @@ function WeightChartCard({
     </Card>
   );
 }
+
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
