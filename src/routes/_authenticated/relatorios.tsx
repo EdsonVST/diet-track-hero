@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { FileDown, FileSpreadsheet, FileText } from "lucide-react";
-import { buildRows, totalsByDay, totalsByMeal, totalsOverall, topFoods, exportCSV, exportXLSX, exportPDF, type MealRow } from "@/lib/reports";
+import { FileDown, FileSpreadsheet, FileText, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendAreaChart, HorizontalRankBar, CHART_COLORS, fmtDayLabel } from "@/components/charts";
+import { buildRows, totalsByDay, averagesByMeal, totalsOverall, topFoods, exportCSV, exportXLSX, exportPDF, type MealRow } from "@/lib/reports";
+
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   component: RelatoriosPage,
