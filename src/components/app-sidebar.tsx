@@ -1,5 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, UtensilsCrossed, Apple, User, LogOut, BarChart3, Dumbbell, History, Calendar, CalendarDays, Droplet, Camera, Layers } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { LayoutDashboard, UtensilsCrossed, Apple, User, LogOut, BarChart3, Dumbbell, History, Calendar, CalendarDays, Droplet, Camera, Layers, ShieldCheck } from "lucide-react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -45,6 +47,21 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const { data: isMaster } = useQuery({
+    queryKey: ["is-master"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return false;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", u.user.id)
+        .eq("role", "master")
+        .maybeSingle();
+      return Boolean(data);
+    },
+  });
+
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -91,11 +108,29 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent>
+        {isMaster && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administração</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith("/admin")}>
+                    <Link to="/admin" className="flex items-center gap-3 text-violet-600">
+                      <ShieldCheck className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>Painel Master</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
         {renderGroup("Nutrição", nutricaoItems)}
         {renderGroup("Treinos", treinoItems)}
         {renderGroup("Corpo", corpoItems)}
         {renderGroup("Conta", contaItems)}
       </SidebarContent>
+
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
