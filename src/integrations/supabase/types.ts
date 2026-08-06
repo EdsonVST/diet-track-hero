@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          acao: string
+          admin_email: string | null
+          admin_id: string
+          created_at: string
+          detalhes: Json
+          id: string
+          target_email: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          acao: string
+          admin_email?: string | null
+          admin_id: string
+          created_at?: string
+          detalhes?: Json
+          id?: string
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          admin_email?: string | null
+          admin_id?: string
+          created_at?: string
+          detalhes?: Json
+          id?: string
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       exercise_categories: {
         Row: {
           created_at: string
@@ -310,7 +343,10 @@ export type Database = {
       profiles: {
         Row: {
           altura: number | null
+          ativo: boolean
+          bloqueado_em: string | null
           created_at: string
+          desativado_em: string | null
           id: string
           idade: number | null
           nome: string | null
@@ -321,7 +357,10 @@ export type Database = {
         }
         Insert: {
           altura?: number | null
+          ativo?: boolean
+          bloqueado_em?: string | null
           created_at?: string
+          desativado_em?: string | null
           id: string
           idade?: number | null
           nome?: string | null
@@ -332,7 +371,10 @@ export type Database = {
         }
         Update: {
           altura?: number | null
+          ativo?: boolean
+          bloqueado_em?: string | null
           created_at?: string
+          desativado_em?: string | null
           id?: string
           idade?: number | null
           nome?: string | null
@@ -426,6 +468,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
       }
       water_goals: {
         Row: {
@@ -687,9 +750,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "master" | "user"
       goal_type: "emagrecimento" | "manutencao" | "ganho_massa"
       meal_type: "cafe_da_manha" | "almoco" | "lanche" | "jantar" | "outro"
     }
@@ -819,6 +889,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["master", "user"],
       goal_type: ["emagrecimento", "manutencao", "ganho_massa"],
       meal_type: ["cafe_da_manha", "almoco", "lanche", "jantar", "outro"],
     },
