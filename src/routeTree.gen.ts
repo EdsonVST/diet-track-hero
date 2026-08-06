@@ -24,6 +24,9 @@ import { Route as AuthenticatedEvolucaoFisicaRouteImport } from './routes/_authe
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAlimentosRouteImport } from './routes/_authenticated/alimentos'
 import { Route as AuthenticatedAlimentacaoRouteImport } from './routes/_authenticated/alimentacao'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated/admin/logs'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -104,10 +107,26 @@ const AuthenticatedAlimentacaoRoute =
     path: '/alimentacao',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/alimentos': typeof AuthenticatedAlimentosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -120,6 +139,8 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/treino-hoje': typeof AuthenticatedTreinoHojeRoute
   '/treinos': typeof AuthenticatedTreinosRoute
+  '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -136,12 +157,15 @@ export interface FileRoutesByTo {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/treino-hoje': typeof AuthenticatedTreinoHojeRoute
   '/treinos': typeof AuthenticatedTreinosRoute
+  '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/alimentacao': typeof AuthenticatedAlimentacaoRoute
   '/_authenticated/alimentos': typeof AuthenticatedAlimentosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -154,12 +178,15 @@ export interface FileRoutesById {
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/treino-hoje': typeof AuthenticatedTreinoHojeRoute
   '/_authenticated/treinos': typeof AuthenticatedTreinosRoute
+  '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/alimentacao'
     | '/alimentos'
     | '/dashboard'
@@ -172,6 +199,8 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/treino-hoje'
     | '/treinos'
+    | '/admin/logs'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -188,11 +217,14 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/treino-hoje'
     | '/treinos'
+    | '/admin/logs'
+    | '/admin'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/alimentacao'
     | '/_authenticated/alimentos'
     | '/_authenticated/dashboard'
@@ -205,6 +237,8 @@ export interface FileRouteTypes {
     | '/_authenticated/relatorios'
     | '/_authenticated/treino-hoje'
     | '/_authenticated/treinos'
+    | '/_authenticated/admin/logs'
+    | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -320,10 +354,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlimentacaoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/logs': {
+      id: '/_authenticated/admin/logs'
+      path: '/logs'
+      fullPath: '/admin/logs'
+      preLoaderRoute: typeof AuthenticatedAdminLogsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminLogsRoute: typeof AuthenticatedAdminLogsRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminLogsRoute: AuthenticatedAdminLogsRoute,
+    AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedAlimentacaoRoute: typeof AuthenticatedAlimentacaoRoute
   AuthenticatedAlimentosRoute: typeof AuthenticatedAlimentosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -339,6 +411,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedAlimentacaoRoute: AuthenticatedAlimentacaoRoute,
   AuthenticatedAlimentosRoute: AuthenticatedAlimentosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
