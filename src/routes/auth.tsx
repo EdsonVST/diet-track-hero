@@ -38,10 +38,18 @@ function AuthPage() {
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") navigate({ to: "/dashboard", replace: true });
+      if (event !== "SIGNED_IN" && event !== "INITIAL_SESSION") return;
+      // Defer: calling supabase.auth.* (router beforeLoad) synchronously inside
+      // this callback deadlocks the auth client's navigator lock.
+      setTimeout(() => {
+        supabase.auth.getSession().then(({ data }) => {
+          if (data.session) navigate({ to: "/dashboard", replace: true });
+        });
+      }, 0);
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
+
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
