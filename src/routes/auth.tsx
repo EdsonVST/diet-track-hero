@@ -41,14 +41,22 @@ function AuthPage() {
       if (event !== "SIGNED_IN" && event !== "INITIAL_SESSION") return;
       // Defer: calling supabase.auth.* (router beforeLoad) synchronously inside
       // this callback deadlocks the auth client's navigator lock.
-      setTimeout(() => {
-        supabase.auth.getSession().then(({ data }) => {
-          if (data.session) navigate({ to: "/dashboard", replace: true });
-        });
+      setTimeout(async () => {
+        const { data } = await supabase.auth.getSession();
+        const uid = data.session?.user.id;
+        if (!uid) return;
+        const { data: role } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", uid)
+          .eq("role", "master")
+          .maybeSingle();
+        navigate({ to: role ? "/admin" : "/dashboard", replace: true });
       }, 0);
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
+
 
 
   const handleSignIn = async (e: React.FormEvent) => {
