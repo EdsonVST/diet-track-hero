@@ -3,9 +3,9 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listAllUsers, setUserAccountStatus } from "@/lib/admin.functions";
+import { startViewAs } from "@/lib/view-as";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Search, Eye, Ban, Power, PowerOff, ShieldCheck } from "lucide-react";
+import { Search, Eye, Ban, Power, PowerOff, ShieldCheck, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({
@@ -33,6 +33,12 @@ function statusOf(u: { ativo: boolean; bloqueado_em: string | null; banned: bool
   if (!u.ativo || u.banned) return "desativado" as const;
   return "ativo" as const;
 }
+
+const statusStyle: Record<string, string> = {
+  ativo: "bg-emerald-100 text-emerald-800 ring-emerald-300",
+  desativado: "bg-slate-200 text-slate-700 ring-slate-300",
+  bloqueado: "bg-red-100 text-red-800 ring-red-300",
+};
 
 function AdminUsersPage() {
   const fetchUsers = useServerFn(listAllUsers);
@@ -77,11 +83,11 @@ function AdminUsersPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Pesquisar por nome ou e-mail"
-            className="pl-9 bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500"
+            className="pl-9 bg-white border-slate-300 text-slate-900 placeholder:text-slate-500"
           />
         </div>
         <Select value={status} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] bg-slate-900 border-slate-700 text-slate-100">
+          <SelectTrigger className="w-[180px] bg-white border-slate-300 text-slate-900">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -91,23 +97,25 @@ function AdminUsersPage() {
             <SelectItem value="bloqueado">Bloqueados</SelectItem>
           </SelectContent>
         </Select>
-        <div className="text-sm text-slate-400">{rows.length} usuário(s)</div>
+        <div className="text-sm font-medium text-slate-600">{rows.length} usuário(s)</div>
       </div>
 
-      {usersQ.isLoading && <div className="text-slate-400 text-sm">Carregando usuários...</div>}
+      {usersQ.isLoading && <div className="text-slate-600 text-sm">Carregando usuários...</div>}
       {usersQ.error && (
-        <div className="text-sm text-red-400">{(usersQ.error as Error).message}</div>
+        <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+          {(usersQ.error as Error).message}
+        </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-800">
+      <div className="overflow-x-auto rounded-xl border border-slate-300 bg-white shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-slate-900/70 text-slate-400">
+          <thead className="bg-slate-50 text-slate-600">
             <tr>
-              <th className="text-left font-medium px-3 py-2">Usuário</th>
-              <th className="text-left font-medium px-3 py-2">Status</th>
-              <th className="text-left font-medium px-3 py-2">Cadastro</th>
-              <th className="text-left font-medium px-3 py-2">Último acesso</th>
-              <th className="text-right font-medium px-3 py-2">Ações</th>
+              <th className="text-left font-semibold px-3 py-2.5">Usuário</th>
+              <th className="text-left font-semibold px-3 py-2.5">Status</th>
+              <th className="text-left font-semibold px-3 py-2.5">Cadastro</th>
+              <th className="text-left font-semibold px-3 py-2.5">Último acesso</th>
+              <th className="text-right font-semibold px-3 py-2.5">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -115,45 +123,48 @@ function AdminUsersPage() {
               const st = statusOf(u);
               const isMaster = u.roles.includes("master");
               return (
-                <tr key={u.id} className="border-t border-slate-800">
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-2 font-medium">
+                <tr key={u.id} className="border-t border-slate-200 hover:bg-slate-50">
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2 font-semibold text-slate-900">
                       {u.nome ?? "—"}
                       {isMaster && (
-                        <Badge className="bg-violet-600 hover:bg-violet-600 text-white gap-1">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-bold text-indigo-800 ring-1 ring-indigo-300">
                           <ShieldCheck className="h-3 w-3" /> Master
-                        </Badge>
+                        </span>
                       )}
                     </div>
-                    <div className="text-xs text-slate-400">{u.email}</div>
+                    <div className="text-xs text-slate-500">{u.email}</div>
                   </td>
-                  <td className="px-3 py-2">
-                    <Badge
-                      className={
-                        st === "ativo"
-                          ? "bg-emerald-600 hover:bg-emerald-600 text-white"
-                          : st === "desativado"
-                            ? "bg-slate-600 hover:bg-slate-600 text-white"
-                            : "bg-red-600 hover:bg-red-600 text-white"
-                      }
+                  <td className="px-3 py-2.5">
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ring-1 ${statusStyle[st]}`}
                     >
                       {st}
-                    </Badge>
+                    </span>
                   </td>
-                  <td className="px-3 py-2 text-slate-400">
+                  <td className="px-3 py-2.5 text-slate-600">
                     {new Date(u.created_at).toLocaleDateString("pt-BR")}
                   </td>
-                  <td className="px-3 py-2 text-slate-400">
+                  <td className="px-3 py-2.5 text-slate-600">
                     {u.last_sign_in_at
                       ? new Date(u.last_sign_in_at).toLocaleString("pt-BR")
                       : "—"}
                   </td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-end gap-1">
-                      <Button asChild size="sm" variant="secondary">
+                  <td className="px-3 py-2.5">
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      <Button asChild size="sm" variant="outline">
                         <Link to="/admin/usuarios/$userId" params={{ userId: u.id }}>
                           <Eye className="h-3.5 w-3.5" /> Ver dados
                         </Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-indigo-700 text-white hover:bg-indigo-800"
+                        onClick={() =>
+                          startViewAs({ id: u.id, nome: u.nome ?? null, email: u.email ?? null })
+                        }
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" /> Visitar Usuário
                       </Button>
                       {st === "ativo" ? (
                         <>
@@ -177,6 +188,7 @@ function AdminUsersPage() {
                       ) : (
                         <Button
                           size="sm"
+                          className="bg-emerald-700 text-white hover:bg-emerald-800"
                           disabled={mut.isPending}
                           onClick={() => mut.mutate({ userId: u.id, action: "ativar" })}
                         >
@@ -188,6 +200,13 @@ function AdminUsersPage() {
                 </tr>
               );
             })}
+            {rows.length === 0 && !usersQ.isLoading && (
+              <tr>
+                <td colSpan={5} className="px-3 py-8 text-center text-slate-500">
+                  Nenhum usuário encontrado.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

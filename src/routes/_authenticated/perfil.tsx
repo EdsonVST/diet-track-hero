@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +69,7 @@ function PerfilPage() {
 
   const saveProfile = async () => {
     if (!p.nome.trim()) return toast.error("Informe o nome");
-    const { data: u } = await supabase.auth.getUser();
+    const { data: u } = await scopedAuthUser();
     if (!u.user) return;
     const { error } = await supabase.from("profiles").upsert({
       id: u.user.id,
@@ -84,7 +85,7 @@ function PerfilPage() {
   };
 
   const saveGoals = async () => {
-    const { data: u } = await supabase.auth.getUser();
+    const { data: u } = await scopedAuthUser();
     if (!u.user) return;
     const { error } = await supabase.from("nutrition_goals").upsert({
       user_id: u.user.id,

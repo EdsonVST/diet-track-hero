@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Copy, ChevronDown, ChevronUp, Dumbbell, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import { ExportTemplatesDialog } from "@/components/export-templates-dialog";
 import {
   DndContext,
   DragEndEvent,
@@ -68,7 +70,7 @@ function ModelosTreinoPage() {
 
   const duplicate = useMutation({
     mutationFn: async (t: Template) => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) throw new Error("Não autenticado");
       const { data: ins, error } = await supabase.from("workout_templates").insert({
         user_id: u.user.id, nome: `${t.nome} (cópia)`, descricao: t.descricao, objetivo: t.objetivo, ativo: true,
@@ -85,6 +87,20 @@ function ModelosTreinoPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["workout_templates"] }); toast.success("Modelo duplicado"); },
   });
 
+  const seedDefaults = useMutation({
+    mutationFn: async () => {
+      const { error } = await (
+        supabase as unknown as { rpc: (name: string) => Promise<{ error: unknown }> }
+      ).rpc("seed_my_default_workout_templates");
+      if (error) throw new Error((error as { message: string }).message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["workout_templates"] });
+      toast.success("Modelos padrão criados: Peito, Costas e Perna");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
@@ -92,10 +108,14 @@ function ModelosTreinoPage() {
           <h1 className="text-2xl md:text-3xl font-black tracking-tight">Modelos de Treino</h1>
           <p className="text-sm text-muted-foreground">Crie divisões reutilizáveis: Treino A/B/C, Push/Pull/Legs, Full Body...</p>
         </div>
-        <TemplateDialog onSaved={() => qc.invalidateQueries({ queryKey: ["workout_templates"] })}>
-          <Button><Plus className="h-4 w-4 mr-1" />Novo modelo</Button>
-        </TemplateDialog>
+        <div className="flex flex-wrap gap-2 justify-end">
+          <ExportTemplatesDialog templates={templates.data ?? []} />
+          <TemplateDialog onSaved={() => qc.invalidateQueries({ queryKey: ["workout_templates"] })}>
+            <Button><Plus className="h-4 w-4 mr-1" />Novo modelo</Button>
+          </TemplateDialog>
+        </div>
       </div>
+
 
       <div className="grid gap-3">
         {(templates.data ?? []).map((t) => (
@@ -122,7 +142,12 @@ function ModelosTreinoPage() {
           </Card>
         ))}
         {templates.data && templates.data.length === 0 && (
-          <div className="text-center text-sm text-muted-foreground py-12">Crie seu primeiro modelo de treino.</div>
+          <div className="text-center text-sm text-muted-foreground py-12 space-y-3">
+            <div>Você ainda não tem modelos de treino.</div>
+            <Button onClick={() => seedDefaults.mutate()} disabled={seedDefaults.isPending}>
+              <Plus className="h-4 w-4 mr-1" />Criar modelos padrão (Peito, Costas e Perna)
+            </Button>
+          </div>
         )}
       </div>
     </div>
@@ -139,7 +164,7 @@ function TemplateDialog({ tpl, children, onSaved }: { tpl?: Template; children: 
       const { error } = await supabase.from("workout_templates").update(form).eq("id", tpl.id);
       if (error) return toast.error(error.message);
     } else {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) return toast.error("Não autenticado");
       const { error } = await supabase.from("workout_templates").insert({ ...form, user_id: u.user.id });
       if (error) return toast.error(error.message);

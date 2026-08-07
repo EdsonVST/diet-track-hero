@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +35,7 @@ function AlimentacaoPage() {
   const mealsQ = useQuery({
     queryKey: ["meals", date],
     queryFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
+      const { data: user } = await scopedAuthUser();
       if (!user.user) return [];
       const { data, error } = await supabase
         .from("meals")
@@ -48,7 +49,7 @@ function AlimentacaoPage() {
 
   const addFood = useMutation({
     mutationFn: async ({ tipo, foodId, quantidade, horario }: { tipo: string; foodId: string; quantidade: number; horario: string | null }) => {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await scopedAuthUser();
       const user = userData.user;
       if (!user) throw new Error("Não autenticado");
       // garante meal

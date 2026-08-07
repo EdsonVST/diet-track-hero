@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -203,7 +204,7 @@ function UploadCard({ onUploaded }: { onUploaded: () => void }) {
     if (!file) return toast.error("Selecione um arquivo");
     setUploading(true);
     try {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) throw new Error("Não autenticado");
       const ext = file.name.split(".").pop() ?? "jpg";
       const path = `${u.user.id}/${crypto.randomUUID()}.${ext}`;

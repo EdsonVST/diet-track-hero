@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +50,7 @@ function HidratacaoPage() {
 
   const setGoal = useMutation({
     mutationFn: async (litros: number) => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) throw new Error("");
       const { error } = await supabase.from("water_goals").upsert({ user_id: u.user.id, meta_ml: Math.round(litros * 1000) });
       if (error) throw error;
@@ -59,7 +60,7 @@ function HidratacaoPage() {
 
   const add = useMutation({
     mutationFn: async (ml: number) => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) throw new Error("");
       const { error } = await supabase.from("water_logs").insert({ user_id: u.user.id, data: today, quantidade_ml: ml });
       if (error) throw error;
