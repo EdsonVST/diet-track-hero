@@ -230,37 +230,8 @@ function HistoricoPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Evolução de carga por exercício</CardTitle>
-          <Select value={exerciseId} onValueChange={setExerciseId}>
-            <SelectTrigger className="max-w-xs"><SelectValue placeholder="Escolha um exercício" /></SelectTrigger>
-            <SelectContent>
-              {(exercisesQ.data ?? []).map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </CardHeader>
-        <CardContent className="h-64">
-          {evoData.length > 0 ? (
-            <>
-              <div className="text-xs text-muted-foreground mb-2">
-                Variação no período: <span className={`font-bold ${evoPct >= 0 ? "text-primary" : "text-destructive"}`}>{evoPct > 0 ? "+" : ""}{evoPct}%</span>
-              </div>
-              <ResponsiveContainer width="100%" height="85%">
-                <LineChart data={evoData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="data" fontSize={11} />
-                  <YAxis fontSize={11} unit="kg" />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="peso" stroke="hsl(var(--primary))" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </>
-          ) : (
-            <div className="grid place-items-center h-full text-sm text-muted-foreground">Escolha um exercício para ver a evolução</div>
-          )}
-        </CardContent>
-      </Card>
+      <LoadProgression workouts={workouts as never} />
+
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
