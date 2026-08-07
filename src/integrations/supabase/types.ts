@@ -757,6 +757,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      seed_default_workout_templates: {
+        Args: { _user_id: string }
+        Returns: number
+      }
+      seed_my_default_workout_templates: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "master" | "user"
