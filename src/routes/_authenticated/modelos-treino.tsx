@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Copy, ChevronDown, ChevronUp, Dumbbell, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import { ExportTemplatesDialog } from "@/components/export-templates-dialog";
 import {
   DndContext,
   DragEndEvent,
@@ -141,7 +142,12 @@ function ModelosTreinoPage() {
           </Card>
         ))}
         {templates.data && templates.data.length === 0 && (
-          <div className="text-center text-sm text-muted-foreground py-12">Crie seu primeiro modelo de treino.</div>
+          <div className="text-center text-sm text-muted-foreground py-12 space-y-3">
+            <div>Você ainda não tem modelos de treino.</div>
+            <Button onClick={() => seedDefaults.mutate()} disabled={seedDefaults.isPending}>
+              <Plus className="h-4 w-4 mr-1" />Criar modelos padrão (Peito, Costas e Perna)
+            </Button>
+          </div>
         )}
       </div>
     </div>
