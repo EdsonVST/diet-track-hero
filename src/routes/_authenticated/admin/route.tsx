@@ -1,7 +1,6 @@
 import { createFileRoute, redirect, Outlet, Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, Users, ScrollText, ArrowLeft } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ShieldCheck, Users, ScrollText, ArrowLeft, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async () => {
@@ -27,20 +26,22 @@ function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
-    <div className="-m-4 md:-m-6 min-h-full bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
+    <div className="-m-4 md:-m-6 min-h-full bg-slate-100 text-slate-900">
+      <header className="bg-indigo-900 text-white shadow-lg">
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 md:px-6">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-white">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/15 ring-1 ring-white/25">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <div className="font-bold leading-tight">Painel Administrativo</div>
-            <div className="text-xs text-slate-400 leading-tight">NutriControl · somente leitura</div>
+            <div className="text-base font-bold leading-tight">Painel Administrativo</div>
+            <div className="text-xs text-indigo-200 leading-tight">NutriControl · gestão e auditoria</div>
           </div>
-          <Badge className="bg-violet-600 hover:bg-violet-600 text-white">Modo Administrador</Badge>
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-amber-950">
+            <ShieldCheck className="h-3.5 w-3.5" /> Administrador
+          </span>
           <Link
             to="/dashboard"
-            className="ml-auto inline-flex items-center gap-2 rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
+            className="ml-auto inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-xs font-medium text-white ring-1 ring-white/25 transition hover:bg-white/20"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao app
           </Link>
@@ -52,10 +53,10 @@ function AdminLayout() {
               <Link
                 key={t.to}
                 to={t.to}
-                className={`inline-flex items-center gap-2 rounded-t-md px-3 py-2 text-sm ${
+                className={`inline-flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-sm font-medium transition ${
                   active
-                    ? "bg-slate-950 text-violet-300 border-x border-t border-slate-800"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-slate-100 text-indigo-900"
+                    : "text-indigo-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <t.icon className="h-4 w-4" /> {t.label}
@@ -64,9 +65,10 @@ function AdminLayout() {
           })}
         </nav>
       </header>
-      <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs text-amber-300 md:px-6">
-        Você está em um ambiente administrativo. Os dados dos usuários são exibidos apenas para
-        consulta e não podem ser editados ou excluídos.
+      <div className="flex items-center gap-2 border-b border-amber-300 bg-amber-100 px-4 py-2 text-xs font-medium text-amber-900 md:px-6">
+        <Lock className="h-3.5 w-3.5 shrink-0" />
+        Ambiente administrativo: os dados dos usuários são exibidos apenas para consulta e não podem
+        ser editados ou excluídos.
       </div>
       <div className="p-4 md:p-6">
         <Outlet />
