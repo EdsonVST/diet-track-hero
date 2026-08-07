@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +46,7 @@ export function WaterRemindersCard() {
 
   const save = useMutation({
     mutationFn: async (payload: { ativo: boolean; horarios: string[] }) => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) throw new Error("Não autenticado");
       const { error } = await supabase
         .from("water_reminders")

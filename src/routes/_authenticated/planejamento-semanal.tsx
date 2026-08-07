@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,7 +53,7 @@ function PlanejamentoPage() {
 
   const createPlan = useMutation({
     mutationFn: async (nome: string) => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) throw new Error("Não autenticado");
       const { data, error } = await supabase.from("weekly_plans").insert({ user_id: u.user.id, nome, ativo: (plans.data?.length ?? 0) === 0 }).select().single();
       if (error) throw error;
@@ -63,7 +64,7 @@ function PlanejamentoPage() {
 
   const activate = useMutation({
     mutationFn: async (id: string) => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) throw new Error("");
       await supabase.from("weekly_plans").update({ ativo: false }).eq("user_id", u.user.id);
       const { error } = await supabase.from("weekly_plans").update({ ativo: true }).eq("id", id);
@@ -81,7 +82,7 @@ function PlanejamentoPage() {
     mutationFn: async (id: string) => {
       const src = plans.data?.find((p) => p.id === id);
       if (!src) return;
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       const { data: novo, error } = await supabase.from("weekly_plans").insert({ user_id: u.user!.id, nome: `${src.nome} (cópia)`, ativo: false }).select().single();
       if (error) throw error;
       const { data: srcDays } = await supabase.from("weekly_plan_days").select("*").eq("plan_id", id);

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +40,7 @@ function HistoricoPage() {
   const workoutsQ = useQuery({
     queryKey: ["all-workouts", from, to],
     queryFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) return [];
       const { data, error } = await supabase
         .from("workouts")

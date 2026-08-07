@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,7 +56,7 @@ function ExerciciosPage() {
     },
   });
 
-  const me = useQuery({ queryKey: ["me"], queryFn: async () => (await supabase.auth.getUser()).data.user });
+  const me = useQuery({ queryKey: ["me"], queryFn: async () => (await scopedAuthUser()).data.user });
 
   const del = useMutation({
     mutationFn: async (id: string) => {
@@ -161,7 +162,7 @@ function ExerciseDialog({ ex, duplicateFrom, cats, children, onSaved }: { ex?: E
       if (error) return toast.error(error.message);
       toast.success("Exercício atualizado");
     } else {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) return toast.error("Não autenticado");
       const { error } = await supabase.from("exercises").insert({ ...payload, user_id: u.user.id, fonte: "usuario" });
       if (error) return toast.error(error.message);

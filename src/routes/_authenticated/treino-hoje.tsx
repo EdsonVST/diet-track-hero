@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,7 +76,7 @@ function TreinoHojePage() {
 
   const createSession = useMutation({
     mutationFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) throw new Error("Não autenticado");
       const nome = dayQ.data?.workout_templates?.nome ?? "Treino";
       const { data, error } = await supabase

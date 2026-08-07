@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,7 +45,7 @@ function RelatoriosPage() {
   const profileQ = useQuery({
     queryKey: ["profile-name"],
     queryFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) return { nome: "Usuário", email: "" };
       const { data } = await supabase.from("profiles").select("nome").eq("id", u.user.id).maybeSingle();
       return { nome: data?.nome ?? u.user.email ?? "Usuário", email: u.user.email ?? "" };

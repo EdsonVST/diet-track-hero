@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +69,7 @@ function ModelosTreinoPage() {
 
   const duplicate = useMutation({
     mutationFn: async (t: Template) => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) throw new Error("Não autenticado");
       const { data: ins, error } = await supabase.from("workout_templates").insert({
         user_id: u.user.id, nome: `${t.nome} (cópia)`, descricao: t.descricao, objetivo: t.objetivo, ativo: true,
@@ -139,7 +140,7 @@ function TemplateDialog({ tpl, children, onSaved }: { tpl?: Template; children: 
       const { error } = await supabase.from("workout_templates").update(form).eq("id", tpl.id);
       if (error) return toast.error(error.message);
     } else {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await scopedAuthUser();
       if (!u.user) return toast.error("Não autenticado");
       const { error } = await supabase.from("workout_templates").insert({ ...form, user_id: u.user.id });
       if (error) return toast.error(error.message);
