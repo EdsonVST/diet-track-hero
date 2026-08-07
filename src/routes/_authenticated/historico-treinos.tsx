@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { FileDown, FileSpreadsheet, Calendar as CalendarIcon } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
+import { LoadProgression } from "@/components/load-progression";
 
 export const Route = createFileRoute("/_authenticated/historico-treinos")({
   component: HistoricoPage,
@@ -23,19 +24,9 @@ function isoDaysAgo(n: number) {
 }
 
 function HistoricoPage() {
-  const [exerciseId, setExerciseId] = useState<string>("");
   const [from, setFrom] = useState<string>(isoDaysAgo(30));
   const [to, setTo] = useState<string>(isoDaysAgo(0));
   const [detailDate, setDetailDate] = useState<string>("");
-
-  const exercisesQ = useQuery({
-    queryKey: ["exercises-active"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("exercises").select("id,nome,grupo_muscular").order("nome");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
 
   const workoutsQ = useQuery({
     queryKey: ["all-workouts", from, to],
@@ -92,26 +83,6 @@ function HistoricoPage() {
       topEx, freqData, grupoData,
     };
   }, [workouts]);
-
-  const evoData = useMemo(() => {
-    if (!exerciseId) return [];
-    const points: { data: string; peso: number }[] = [];
-    for (const w of [...workouts].reverse()) {
-      for (const we of (w.workout_exercises ?? []) as any[]) {
-        if (we.exercise_id === exerciseId && we.peso != null) {
-          points.push({ data: w.data, peso: Number(we.peso) });
-        }
-      }
-    }
-    return points;
-  }, [exerciseId, workouts]);
-
-  const evoPct = useMemo(() => {
-    if (evoData.length < 2) return 0;
-    const first = evoData[0].peso, last = evoData[evoData.length - 1].peso;
-    if (!first) return 0;
-    return Math.round(((last - first) / first) * 100);
-  }, [evoData]);
 
   const detail = useMemo(() => workouts.find((w) => w.data === detailDate) ?? null, [workouts, detailDate]);
 
