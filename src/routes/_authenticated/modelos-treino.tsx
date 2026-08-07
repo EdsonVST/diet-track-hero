@@ -86,6 +86,20 @@ function ModelosTreinoPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["workout_templates"] }); toast.success("Modelo duplicado"); },
   });
 
+  const seedDefaults = useMutation({
+    mutationFn: async () => {
+      const { error } = await (
+        supabase as unknown as { rpc: (name: string) => Promise<{ error: unknown }> }
+      ).rpc("seed_my_default_workout_templates");
+      if (error) throw new Error((error as { message: string }).message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["workout_templates"] });
+      toast.success("Modelos padrão criados: Peito, Costas e Perna");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
@@ -93,10 +107,14 @@ function ModelosTreinoPage() {
           <h1 className="text-2xl md:text-3xl font-black tracking-tight">Modelos de Treino</h1>
           <p className="text-sm text-muted-foreground">Crie divisões reutilizáveis: Treino A/B/C, Push/Pull/Legs, Full Body...</p>
         </div>
-        <TemplateDialog onSaved={() => qc.invalidateQueries({ queryKey: ["workout_templates"] })}>
-          <Button><Plus className="h-4 w-4 mr-1" />Novo modelo</Button>
-        </TemplateDialog>
+        <div className="flex flex-wrap gap-2 justify-end">
+          <ExportTemplatesDialog templates={templates.data ?? []} />
+          <TemplateDialog onSaved={() => qc.invalidateQueries({ queryKey: ["workout_templates"] })}>
+            <Button><Plus className="h-4 w-4 mr-1" />Novo modelo</Button>
+          </TemplateDialog>
+        </div>
       </div>
+
 
       <div className="grid gap-3">
         {(templates.data ?? []).map((t) => (
