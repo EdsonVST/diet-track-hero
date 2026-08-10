@@ -11,11 +11,12 @@ import { Leaf } from "lucide-react";
 import { z } from "zod";
 
 export const Route = createFileRoute("/auth")({
-  ssr: false,
   beforeLoad: async () => {
+    if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: "/dashboard" });
   },
+
   component: AuthPage,
 });
 
