@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { computeNutrients, emptyTotals, sumTotals, MEAL_LABELS } from "@/lib/nutrition";
@@ -19,22 +20,26 @@ function today() {
 
 function DashboardPage() {
   const date = today();
+  const { userId } = useScopedUser();
 
   const goalsQ = useQuery({
-    queryKey: ["goals"],
+    queryKey: ["goals", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("nutrition_goals").select("*").maybeSingle();
+      const { data, error } = await supabase.from("nutrition_goals").select("*").eq("user_id", userId!).maybeSingle();
       if (error) throw error;
       return data;
     },
   });
 
   const todayQ = useQuery({
-    queryKey: ["meals-today", date],
+    queryKey: ["meals-today", userId, date],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("meals")
         .select("id,tipo,horario,meal_foods(id,quantidade,foods(nome,unidade_base,energia_kcal,proteina,carboidrato,gordura,fibra,sodio))")
+        .eq("user_id", userId!)
         .eq("data", date)
         .order("horario", { ascending: true, nullsFirst: false });
       if (error) throw error;
@@ -148,19 +153,31 @@ function FitnessCards() {
   const today = todayISO();
   const dow = new Date().getDay();
 
-  const waterGoal = useQuery({ queryKey: ["water_goal"], queryFn: async () => (await supabase.from("water_goals").select("*").maybeSingle()).data });
+  const { userId } = useScopedUser();
+  const on = !!userId;
+
+  const waterGoal = useQuery({
+    queryKey: ["water_goal", userId],
+    enabled: on,
+    queryFn: async () => (await supabase.from("water_goals").select("*").eq("user_id", userId!).maybeSingle()).data,
+  });
   const waterToday = useQuery({
-    queryKey: ["water_today", today],
-    queryFn: async () => (await supabase.from("water_logs").select("quantidade_ml").eq("data", today)).data ?? [],
+    queryKey: ["water_today", userId, today],
+    enabled: on,
+    queryFn: async () =>
+      (await supabase.from("water_logs").select("quantidade_ml").eq("user_id", userId!).eq("data", today)).data ?? [],
   });
   const lastPhoto = useQuery({
-    queryKey: ["last_photo"],
-    queryFn: async () => (await supabase.from("progress_photos").select("data").order("data", { ascending: false }).limit(1).maybeSingle()).data,
+    queryKey: ["last_photo", userId],
+    enabled: on,
+    queryFn: async () =>
+      (await supabase.from("progress_photos").select("data").eq("user_id", userId!).order("data", { ascending: false }).limit(1).maybeSingle()).data,
   });
   const todayWorkout = useQuery({
-    queryKey: ["today-workout-card", dow],
+    queryKey: ["today-workout-card", userId, dow],
+    enabled: on,
     queryFn: async () => {
-      const { data: plan } = await supabase.from("weekly_plans").select("id").eq("ativo", true).maybeSingle();
+      const { data: plan } = await supabase.from("weekly_plans").select("id").eq("user_id", userId!).eq("ativo", true).maybeSingle();
       if (!plan) return null;
       const { data: day } = await supabase.from("weekly_plan_days").select("*,workout_templates(nome)").eq("plan_id", plan.id).eq("dia_semana", dow).maybeSingle();
       return day;
