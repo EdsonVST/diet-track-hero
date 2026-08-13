@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,18 +23,21 @@ export const Route = createFileRoute("/_authenticated/perfil")({
 });
 
 function PerfilPage() {
+  const { userId } = useScopedUser();
   const profileQ = useQuery({
-    queryKey: ["profile"],
+    queryKey: ["profile", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").maybeSingle();
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId!).maybeSingle();
       if (error) throw error;
       return data;
     },
   });
   const goalsQ = useQuery({
-    queryKey: ["goals"],
+    queryKey: ["goals", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("nutrition_goals").select("*").maybeSingle();
+      const { data, error } = await supabase.from("nutrition_goals").select("*").eq("user_id", userId!).maybeSingle();
       if (error) throw error;
       return data;
     },
