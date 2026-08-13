@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,20 +25,23 @@ function todayISO() {
 function HidratacaoPage() {
   const qc = useQueryClient();
   const today = todayISO();
+  const { userId } = useScopedUser();
 
   const goalQ = useQuery({
-    queryKey: ["water_goal"],
+    queryKey: ["water_goal", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data } = await supabase.from("water_goals").select("*").maybeSingle();
+      const { data } = await supabase.from("water_goals").select("*").eq("user_id", userId!).maybeSingle();
       return data;
     },
   });
 
   const logsQ = useQuery({
-    queryKey: ["water_logs"],
+    queryKey: ["water_logs", userId],
+    enabled: !!userId,
     queryFn: async () => {
       const since = new Date(); since.setDate(since.getDate() - 30);
-      const { data } = await supabase.from("water_logs").select("*").gte("data", since.toISOString().slice(0, 10)).order("created_at", { ascending: false });
+      const { data } = await supabase.from("water_logs").select("*").eq("user_id", userId!).gte("data", since.toISOString().slice(0, 10)).order("created_at", { ascending: false });
       return data ?? [];
     },
   });
@@ -55,7 +59,7 @@ function HidratacaoPage() {
       const { error } = await supabase.from("water_goals").upsert({ user_id: u.user.id, meta_ml: Math.round(litros * 1000) });
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["water_goal"] }); toast.success("Meta atualizada"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["water_goal", userId] }); toast.success("Meta atualizada"); },
   });
 
   const add = useMutation({

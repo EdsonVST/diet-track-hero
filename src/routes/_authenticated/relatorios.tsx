@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,22 +43,25 @@ function RelatoriosPage() {
   const [custom, setCustom] = useState({ from: "", to: "" });
   const range = useMemo(() => rangeFor(preset, custom), [preset, custom]);
 
+  const { userId, email } = useScopedUser();
+
   const profileQ = useQuery({
-    queryKey: ["profile-name"],
+    queryKey: ["profile-name", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data: u } = await scopedAuthUser();
-      if (!u.user) return { nome: "Usuário", email: "" };
-      const { data } = await supabase.from("profiles").select("nome").eq("id", u.user.id).maybeSingle();
-      return { nome: data?.nome ?? u.user.email ?? "Usuário", email: u.user.email ?? "" };
+      const { data } = await supabase.from("profiles").select("nome").eq("id", userId!).maybeSingle();
+      return { nome: data?.nome ?? email ?? "Usuário", email: email ?? "" };
     },
   });
 
   const mealsQ = useQuery({
-    queryKey: ["report-meals", range.from, range.to],
+    queryKey: ["report-meals", userId, range.from, range.to],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("meals")
         .select("id,data,tipo,horario,meal_foods(id,quantidade,foods(*))")
+        .eq("user_id", userId!)
         .gte("data", range.from)
         .lte("data", range.to)
         .order("data", { ascending: true });
@@ -67,11 +71,13 @@ function RelatoriosPage() {
   });
 
   const waterQ = useQuery({
-    queryKey: ["report-water", range.from, range.to],
+    queryKey: ["report-water", userId, range.from, range.to],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("water_logs")
         .select("data,quantidade_ml")
+        .eq("user_id", userId!)
         .gte("data", range.from)
         .lte("data", range.to);
       if (error) throw error;

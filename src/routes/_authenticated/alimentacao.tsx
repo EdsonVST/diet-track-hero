@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,15 +32,16 @@ function todayISO() {
 function AlimentacaoPage() {
   const [date, setDate] = useState(todayISO());
   const qc = useQueryClient();
+  const { userId } = useScopedUser();
 
   const mealsQ = useQuery({
-    queryKey: ["meals", date],
+    queryKey: ["meals", userId, date],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data: user } = await scopedAuthUser();
-      if (!user.user) return [];
       const { data, error } = await supabase
         .from("meals")
         .select("id,tipo,horario,meal_foods(id,quantidade,food_id,foods(id,nome,unidade_base,energia_kcal,proteina,carboidrato,gordura,fibra,sodio))")
+        .eq("user_id", userId!)
         .eq("data", date)
         .order("horario", { ascending: true, nullsFirst: false });
       if (error) throw error;
@@ -72,8 +74,8 @@ function AlimentacaoPage() {
       if (e2) throw e2;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["meals", date] });
-      qc.invalidateQueries({ queryKey: ["meals-today"] });
+      qc.invalidateQueries({ queryKey: ["meals", userId, date] });
+      qc.invalidateQueries({ queryKey: ["meals-today", userId] });
       toast.success("Alimento adicionado");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -85,8 +87,8 @@ function AlimentacaoPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["meals", date] });
-      qc.invalidateQueries({ queryKey: ["meals-today"] });
+      qc.invalidateQueries({ queryKey: ["meals", userId, date] });
+      qc.invalidateQueries({ queryKey: ["meals-today", userId] });
     },
   });
 
@@ -95,7 +97,7 @@ function AlimentacaoPage() {
       const { error } = await supabase.from("meals").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["meals", date] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["meals", userId, date] }),
   });
 
   const mealsByType = useMemo(() => {
