@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,10 +43,12 @@ function ModelosTreinoPage() {
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  const { userId } = useScopedUser();
   const templates = useQuery({
-    queryKey: ["workout_templates"],
+    queryKey: ["workout_templates", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("workout_templates").select("*").order("created_at");
+      const { data, error } = await supabase.from("workout_templates").select("*").eq("user_id", userId!).order("created_at");
       if (error) throw error;
       return (data ?? []) as Template[];
     },

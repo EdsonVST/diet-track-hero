@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,19 +22,22 @@ function PlanejamentoPage() {
   const qc = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
+  const { userId } = useScopedUser();
   const plans = useQuery({
-    queryKey: ["weekly_plans"],
+    queryKey: ["weekly_plans", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("weekly_plans").select("*").order("created_at");
+      const { data, error } = await supabase.from("weekly_plans").select("*").eq("user_id", userId!).order("created_at");
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const templates = useQuery({
-    queryKey: ["workout_templates"],
+    queryKey: ["workout_templates", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("workout_templates").select("id,nome").order("nome");
+      const { data, error } = await supabase.from("workout_templates").select("id,nome").eq("user_id", userId!).order("nome");
       if (error) throw error;
       return data ?? [];
     },
@@ -59,7 +63,7 @@ function PlanejamentoPage() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (p) => { qc.invalidateQueries({ queryKey: ["weekly_plans"] }); setSelectedPlan(p.id); toast.success("Plano criado"); },
+    onSuccess: (p) => { qc.invalidateQueries({ queryKey: ["weekly_plans", userId] }); setSelectedPlan(p.id); toast.success("Plano criado"); },
   });
 
   const activate = useMutation({
@@ -70,12 +74,12 @@ function PlanejamentoPage() {
       const { error } = await supabase.from("weekly_plans").update({ ativo: true }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["weekly_plans"] }); toast.success("Plano ativado"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["weekly_plans", userId] }); toast.success("Plano ativado"); },
   });
 
   const removePlan = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("weekly_plans").delete().eq("id", id); if (error) throw error; },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["weekly_plans"] }); setSelectedPlan(null); toast.success("Removido"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["weekly_plans", userId] }); setSelectedPlan(null); toast.success("Removido"); },
   });
 
   const duplicate = useMutation({
@@ -92,7 +96,7 @@ function PlanejamentoPage() {
         })));
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["weekly_plans"] }); toast.success("Semana duplicada"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["weekly_plans", userId] }); toast.success("Semana duplicada"); },
   });
 
   const setDay = useMutation({

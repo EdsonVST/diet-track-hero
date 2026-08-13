@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,18 +49,22 @@ function EvolucaoFisicaPage() {
   const [compareLeft, setCompareLeft] = useState<string>("");
   const [compareRight, setCompareRight] = useState<string>("");
 
+  const { userId } = useScopedUser();
+
   const profileQ = useQuery({
-    queryKey: ["profile"],
+    queryKey: ["profile", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").maybeSingle();
+      const { data } = await supabase.from("profiles").select("*").eq("id", userId!).maybeSingle();
       return data;
     },
   });
 
   const photosQ = useQuery({
-    queryKey: ["progress_photos"],
+    queryKey: ["progress_photos", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("progress_photos").select("*").order("data", { ascending: false });
+      const { data, error } = await supabase.from("progress_photos").select("*").eq("user_id", userId!).order("data", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Photo[];
     },
