@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,15 +29,16 @@ function HistoricoPage() {
   const [to, setTo] = useState<string>(isoDaysAgo(0));
   const [detailDate, setDetailDate] = useState<string>("");
 
+  const { userId } = useScopedUser();
+
   const workoutsQ = useQuery({
-    queryKey: ["all-workouts", from, to],
+    queryKey: ["all-workouts", userId, from, to],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data: u } = await scopedAuthUser();
-      if (!u.user) return [];
       const { data, error } = await supabase
         .from("workouts")
         .select("id, data, duracao_min, observacoes, finalizado_em, workout_exercises(id, peso, series, repeticoes, observacoes, exercise_id, exercises(nome, grupo_muscular))")
-        .eq("user_id", u.user.id)
+        .eq("user_id", userId!)
         .gte("data", from)
         .lte("data", to)
         .order("data", { ascending: false })

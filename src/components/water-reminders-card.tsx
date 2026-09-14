@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { scopedAuthUser } from "@/lib/view-as";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,10 +25,12 @@ export function WaterRemindersCard() {
   const [standalone, setStandalone] = useState(true);
   useEffect(() => setStandalone(isStandalone()), []);
 
+  const { userId } = useScopedUser();
   const remindersQ = useQuery({
-    queryKey: ["water_reminders"],
+    queryKey: ["water_reminders", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("water_reminders").select("*").maybeSingle();
+      const { data, error } = await supabase.from("water_reminders").select("*").eq("user_id", userId!).maybeSingle();
       if (error) throw error;
       return data as WaterReminders | null;
     },
@@ -56,7 +59,7 @@ export function WaterRemindersCard() {
       await syncSchedule(payload);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["water_reminders"] });
+      qc.invalidateQueries({ queryKey: ["water_reminders", userId] });
       toast.success("Lembretes salvos e agendados");
     },
     onError: (e: Error) => toast.error(e.message),
