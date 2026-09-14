@@ -32,6 +32,7 @@ type Exercise = {
 };
 
 function ExerciciosPage() {
+  const { userId } = useScopedUser();
   const [search, setSearch] = useState("");
   const [categoriaFilter, setCategoriaFilter] = useState<string>("all");
   const qc = useQueryClient();
