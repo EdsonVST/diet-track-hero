@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,13 +26,15 @@ type Food = any;
 const MICRO_KEYS = [...VITAMIN_KEYS, ...MINERAL_KEYS] as const;
 
 function AlimentosPage() {
+  const { userId } = useScopedUser();
   const [search, setSearch] = useState("");
   const qc = useQueryClient();
 
   const foodsQ = useQuery({
-    queryKey: ["foods-list", search],
+    queryKey: ["foods-list", userId, search],
+    enabled: !!userId,
     queryFn: async () => {
-      let q = supabase.from("foods").select("*").order("nome").limit(200);
+      let q = supabase.from("foods").select("*").or(`user_id.is.null,user_id.eq.${userId}`).order("nome").limit(200);
       if (search.trim()) q = q.ilike("nome", `%${search.trim()}%`);
       const { data, error } = await q;
       if (error) throw error;
@@ -39,7 +42,7 @@ function AlimentosPage() {
     },
   });
 
-  const userQ = useQuery({ queryKey: ["me"], queryFn: async () => (await scopedAuthUser()).data.user });
+  const userQ = { data: userId ? { id: userId } : null };
 
   const del = useMutation({
     mutationFn: async (id: string) => {

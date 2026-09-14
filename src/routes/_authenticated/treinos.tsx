@@ -63,7 +63,6 @@ function ExerciciosPage() {
     },
   });
 
-  const { userId } = useScopedUser();
   const me = { data: userId ? { id: userId } : null };
 
   const del = useMutation({
