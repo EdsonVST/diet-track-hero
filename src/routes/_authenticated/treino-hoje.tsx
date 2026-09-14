@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,12 +26,15 @@ function TreinoHojePage() {
   const dow = new Date().getDay();
   const today = todayISO();
 
+  const { userId } = useScopedUser();
+
   const activePlan = useQuery({
-    queryKey: ["active-plan"],
+    queryKey: ["active-plan", userId],
+    enabled: !!userId,
     staleTime: 0,
     refetchOnMount: "always",
     queryFn: async () => {
-      const { data } = await supabase.from("weekly_plans").select("*").eq("ativo", true).maybeSingle();
+      const { data } = await supabase.from("weekly_plans").select("*").eq("user_id", userId!).eq("ativo", true).maybeSingle();
       return data;
     },
   });
@@ -65,11 +69,12 @@ function TreinoHojePage() {
   });
 
   const sessionQ = useQuery({
-    queryKey: ["workout-today", today],
+    queryKey: ["workout-today", userId, today],
+    enabled: !!userId,
     staleTime: 0,
     refetchOnMount: "always",
     queryFn: async () => {
-      const { data } = await supabase.from("workouts").select("*,workout_exercises(*)").eq("data", today).maybeSingle();
+      const { data } = await supabase.from("workouts").select("*,workout_exercises(*)").eq("user_id", userId!).eq("data", today).maybeSingle();
       return data;
     },
   });
@@ -88,7 +93,7 @@ function TreinoHojePage() {
       return data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["workout-today", today] });
+      qc.invalidateQueries({ queryKey: ["workout-today", userId, today] });
       toast.success("Treino iniciado");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -107,7 +112,7 @@ function TreinoHojePage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["workout-today", today] });
+      qc.invalidateQueries({ queryKey: ["workout-today", userId, today] });
       qc.invalidateQueries({ queryKey: ["all-workouts"] });
       toast.success("Treino finalizado com sucesso!");
     },
@@ -121,7 +126,7 @@ function TreinoHojePage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["workout-today", today] });
+      qc.invalidateQueries({ queryKey: ["workout-today", userId, today] });
       toast.success("Treino reaberto");
     },
   });
@@ -195,7 +200,7 @@ function TreinoHojePage() {
         <>
           <div className="grid gap-3">
             {(exercises.data ?? []).map((te) => (
-              <ExerciseLogger key={te.id} sessionId={sessionId} templateEx={te as any} locked={finalizado} />
+              <ExerciseLogger userId={userId!} key={te.id} sessionId={sessionId} templateEx={te as any} locked={finalizado} />
             ))}
           </div>
 
@@ -211,15 +216,16 @@ function TreinoHojePage() {
   );
 }
 
-function ExerciseLogger({ sessionId, templateEx, locked }: { sessionId: string; templateEx: { id: string; exercise_id: string; series: number; repeticoes: string; descanso_segundos: number; observacoes: string | null; exercises: { id: string; nome: string; grupo_muscular: string | null } | null }; locked: boolean }) {
+function ExerciseLogger({ userId, sessionId, templateEx, locked }: { userId: string; sessionId: string; templateEx: { id: string; exercise_id: string; series: number; repeticoes: string; descanso_segundos: number; observacoes: string | null; exercises: { id: string; nome: string; grupo_muscular: string | null } | null }; locked: boolean }) {
   const qc = useQueryClient();
 
   const last = useQuery({
-    queryKey: ["last-load", templateEx.exercise_id],
+    queryKey: ["last-load", userId, templateEx.exercise_id],
     queryFn: async () => {
       const { data } = await supabase
         .from("workout_exercises")
         .select("peso,series,repeticoes,workouts!inner(data,user_id)")
+        .eq("workouts.user_id", userId)
         .eq("exercise_id", templateEx.exercise_id)
         .neq("workout_id", sessionId)
         .order("workouts(data)", { ascending: false })
@@ -278,7 +284,7 @@ function ExerciseLogger({ sessionId, templateEx, locked }: { sessionId: string; 
       setPeso(""); setSeries(""); setReps(""); setObs("");
       qc.invalidateQueries({ queryKey: ["session-ex", sessionId, templateEx.exercise_id] });
       qc.invalidateQueries({ queryKey: ["workout-today"] });
-      qc.invalidateQueries({ queryKey: ["last-load", templateEx.exercise_id] });
+      qc.invalidateQueries({ queryKey: ["last-load", userId, templateEx.exercise_id] });
     },
     onError: (e: Error) => toast.error(e.message),
   });

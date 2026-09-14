@@ -55,9 +55,10 @@ function ModelosTreinoPage() {
   });
 
   const exercises = useQuery({
-    queryKey: ["exercises-all"],
+    queryKey: ["exercises-all", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("exercises").select("id,nome,grupo_muscular").order("nome");
+      const { data, error } = await supabase.from("exercises").select("id,nome,grupo_muscular").or(`user_id.is.null,user_id.eq.${userId}`).order("nome");
       if (error) throw error;
       return data ?? [];
     },

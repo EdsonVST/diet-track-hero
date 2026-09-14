@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { scopedAuthUser } from "@/lib/view-as";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -206,15 +207,15 @@ export function LoadProgression({ workouts }: { workouts: WorkoutRow[] }) {
       .sort((a, b) => a.nome.localeCompare(b.nome));
   }, [workouts]);
 
+  const { userId } = useScopedUser();
   const templatesQ = useQuery({
-    queryKey: ["templates-progression"],
+    queryKey: ["templates-progression", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data: u } = await scopedAuthUser();
-      if (!u.user) return [];
       const { data, error } = await supabase
         .from("workout_templates")
         .select("id, nome, template_exercises(exercise_id, ordem, exercises(nome))")
-        .eq("user_id", u.user.id)
+        .eq("user_id", userId!)
         .order("created_at");
       if (error) throw error;
       return data ?? [];

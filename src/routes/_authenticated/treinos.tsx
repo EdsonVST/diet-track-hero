@@ -3,6 +3,7 @@ import { scopedAuthUser } from "@/lib/view-as";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useScopedUser } from "@/lib/scoped-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ type Exercise = {
 };
 
 function ExerciciosPage() {
+  const { userId } = useScopedUser();
   const [search, setSearch] = useState("");
   const [categoriaFilter, setCategoriaFilter] = useState<string>("all");
   const qc = useQueryClient();
@@ -45,9 +47,15 @@ function ExerciciosPage() {
   });
 
   const list = useQuery({
-    queryKey: ["exercises", search, categoriaFilter],
+    queryKey: ["exercises", userId, search, categoriaFilter],
+    enabled: !!userId,
     queryFn: async () => {
-      let q = supabase.from("exercises").select("*").order("nome").limit(300);
+      let q = supabase
+        .from("exercises")
+        .select("*")
+        .or(`user_id.is.null,user_id.eq.${userId}`)
+        .order("nome")
+        .limit(300);
       if (search.trim()) q = q.ilike("nome", `%${search.trim()}%`);
       if (categoriaFilter !== "all") q = q.eq("categoria_id", categoriaFilter);
       const { data, error } = await q;
@@ -56,7 +64,7 @@ function ExerciciosPage() {
     },
   });
 
-  const me = useQuery({ queryKey: ["me"], queryFn: async () => (await scopedAuthUser()).data.user });
+  const me = { data: userId ? { id: userId } : null };
 
   const del = useMutation({
     mutationFn: async (id: string) => {
