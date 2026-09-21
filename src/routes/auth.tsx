@@ -11,8 +11,9 @@ import { Leaf } from "lucide-react";
 import { z } from "zod";
 
 export const Route = createFileRoute("/auth")({
+  // A sessão do Supabase vive no localStorage: sem SSR não há divergência de hidratação.
+  ssr: false,
   beforeLoad: async () => {
-    if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: "/dashboard" });
   },
